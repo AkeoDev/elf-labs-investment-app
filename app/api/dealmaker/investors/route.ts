@@ -99,10 +99,10 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-  console.error("[DealMaker API] Error creating investor:", error)
-  return NextResponse.json(
-    { error: "Failed to create investor. Please try again." },
-    { status: 500 }
-  )
-}
+    console.error("[DealMaker API] Error creating investor:", error)
+    return NextResponse.json(
+      { error: "Failed to create investor. Please try again." },
+      { status: 500 }
+    )
+  }
 }
