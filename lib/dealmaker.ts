@@ -175,7 +175,7 @@ export async function createInvestor(
   dealId?: string
 ): Promise<DealMakerInvestor> {
   const id = dealId || DEALMAKER_CONFIG.dealId
-  
+  console.log(id, investorData);
   return apiRequest<DealMakerInvestor>(`/deals/${id}/investors`, {
     method: "POST",
     body: JSON.stringify(investorData),
