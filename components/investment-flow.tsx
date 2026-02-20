@@ -4,30 +4,15 @@ import { useState } from "react"
 import { InvestmentAmount } from "@/components/investment-amount"
 import { ContactInformation } from "@/components/contact-information"
 import { AccordionSection } from "@/components/accordion-section"
-import { useDealMaker } from "@/hooks/use-dealmaker"
-import { Loader2, AlertCircle, ExternalLink } from "lucide-react"
 
-interface InvestmentFlowProps {
-  userData: {
-    email: string
-    firstName: string
-    lastName: string
-    phone: string
-  }
-}
-
-export function InvestmentFlow({ userData }: InvestmentFlowProps) {
+export function InvestmentFlow() {
   const [activeSection, setActiveSection] = useState(1)
   const [investmentData, setInvestmentData] = useState<{
     amount: number
     shares: number
     bonusShares: number
   } | null>(null)
-  const [investorType, setInvestorType] = useState<string | null>(null)
   const [completedSections, setCompletedSections] = useState<number[]>([])
-  const [accessLink, setAccessLink] = useState<string | null>(null)
-
-  const { createInvestor, isLoading, error } = useDealMaker()
 
   const handleInvestmentComplete = (amount: number, shares: number, bonusShares: number) => {
     setInvestmentData({ amount, shares, bonusShares })
@@ -35,37 +20,9 @@ export function InvestmentFlow({ userData }: InvestmentFlowProps) {
     setActiveSection(2)
   }
 
-  const handleContactComplete = (type: string) => {
-    setInvestorType(type)
+  const handleContactComplete = () => {
     setCompletedSections([...completedSections, 2])
     setActiveSection(3)
-  }
-
-  const handleConfirmation = () => {
-    setCompletedSections([...completedSections, 3])
-    setActiveSection(4)
-  }
-
-  const handleCompletePayment = async () => {
-    if (!investmentData) return
-
-    const result = await createInvestor({
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      phone: userData.phone,
-      investmentAmount: investmentData.amount,
-    })
-
-    if (result?.investor.accessLink) {
-      setAccessLink(result.investor.accessLink)
-      setCompletedSections([...completedSections, 4])
-      // Redirect to DealMaker to complete the investment
-      window.location.href = result.investor.accessLink
-    } else if (result?.success) {
-      // Investor was created but no access link was returned
-      setCompletedSections([...completedSections, 4])
-    }
   }
 
   return (
@@ -111,14 +68,6 @@ export function InvestmentFlow({ userData }: InvestmentFlowProps) {
         isActive={activeSection === 2}
         isCompleted={completedSections.includes(2)}
         onToggle={() => setActiveSection(activeSection === 2 ? 0 : 2)}
-        summary={
-          investorType && (
-            <div className="text-sm mt-2">
-              <span className="text-gray-500">Investor Type</span>
-              <span className="text-white ml-4">{investorType}</span>
-            </div>
-          )
-        }
       >
         <ContactInformation onContinue={handleContactComplete} />
       </AccordionSection>
@@ -131,62 +80,16 @@ export function InvestmentFlow({ userData }: InvestmentFlowProps) {
         isCompleted={completedSections.includes(3)}
         onToggle={() => setActiveSection(activeSection === 3 ? 0 : 3)}
       >
-        <div className="py-4 space-y-4">
-          <div className="bg-[#1a2744] rounded-lg p-4 space-y-3">
-            <h3 className="text-white font-medium text-sm">Review Your Investment</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Name</span>
-                <span className="text-white">{userData.firstName} {userData.lastName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Email</span>
-                <span className="text-white">{userData.email}</span>
-              </div>
-              {userData.phone && (
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Phone</span>
-                  <span className="text-white">{userData.phone}</span>
-                </div>
-              )}
-              {investorType && (
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Investor Type</span>
-                  <span className="text-white">{investorType}</span>
-                </div>
-              )}
-              {investmentData && (
-                <>
-                  <div className="border-t border-gray-600 my-2" />
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Investment Amount</span>
-                    <span className="text-white font-semibold">
-                      ${investmentData.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Base Shares</span>
-                    <span className="text-white">{investmentData.shares.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Bonus Shares</span>
-                    <span className="text-[#e91e8c]">+{investmentData.bonusShares.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold">
-                    <span className="text-gray-300">Total Shares</span>
-                    <span className="text-white">
-                      {(investmentData.shares + investmentData.bonusShares).toLocaleString()}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+        <div className="py-4">
+          <p className="text-gray-400">Investor confirmation content goes here...</p>
           <button
-            onClick={handleConfirmation}
-            className="w-full bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors"
+            onClick={() => {
+              setCompletedSections([...completedSections, 3])
+              setActiveSection(4)
+            }}
+            className="w-full mt-4 bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors"
           >
-            Confirm & Continue
+            Continue
           </button>
         </div>
       </AccordionSection>
@@ -200,63 +103,13 @@ export function InvestmentFlow({ userData }: InvestmentFlowProps) {
         onToggle={() => setActiveSection(activeSection === 4 ? 0 : 4)}
         isLast
       >
-        <div className="py-4 space-y-4">
-          {investmentData && (
-            <div className="bg-[#1a2744] rounded-lg p-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400 text-sm">Total Due</span>
-                <span className="text-white text-2xl font-bold">
-                  ${investmentData.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <p className="text-gray-400 text-sm leading-relaxed">
-            Clicking "Complete Payment" will submit your investment to DealMaker and redirect you to complete the payment process securely.
-          </p>
-
-          {error && (
-            <div className="flex items-start gap-2 bg-red-900/30 border border-red-500/30 rounded-lg p-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-red-300 text-sm">{error}</p>
-            </div>
-          )}
-
-          {accessLink && (
-            <div className="flex items-start gap-2 bg-green-900/30 border border-green-500/30 rounded-lg p-3">
-              <ExternalLink className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-green-300 text-sm">Investment submitted. Redirecting to DealMaker...</p>
-                <a
-                  href={accessLink}
-                  className="text-green-400 text-sm underline hover:text-green-300"
-                >
-                  Click here if you are not redirected
-                </a>
-              </div>
-            </div>
-          )}
-
+        <div className="py-4">
+          <p className="text-gray-400">Payment options go here...</p>
           <button
-            onClick={handleCompletePayment}
-            disabled={isLoading || completedSections.includes(4)}
-            className={`w-full py-4 rounded-full font-medium flex items-center justify-center gap-2 transition-colors ${
-              isLoading || completedSections.includes(4)
-                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                : "bg-[#e91e8c] hover:bg-[#d11a7d] text-white"
-            }`}
+            onClick={() => setCompletedSections([...completedSections, 4])}
+            className="w-full mt-4 bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Submitting Investment...
-              </>
-            ) : completedSections.includes(4) ? (
-              "Investment Submitted"
-            ) : (
-              "Complete Payment"
-            )}
+            Complete Payment
           </button>
         </div>
       </AccordionSection>

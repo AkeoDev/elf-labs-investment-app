@@ -58,7 +58,7 @@ export default function InvestmentPage() {
 
               <div className="grid md:grid-cols-[1fr,400px] gap-6">
                 {/* Left: Investment Flow */}
-                <InvestmentFlow userData={userData} />
+                <InvestmentFlow />
 
                 {/* Right: Investor Perks & Additional Info - Desktop only */}
                 <div className="hidden md:flex flex-col gap-6">

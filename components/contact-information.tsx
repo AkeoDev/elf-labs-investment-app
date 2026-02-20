@@ -4,7 +4,7 @@ import { useState } from "react"
 import { HelpCircle, ChevronDown } from "lucide-react"
 
 interface ContactInformationProps {
-  onContinue: (investorType: string) => void
+  onContinue: () => void
 }
 
 const investorTypes = [
@@ -57,7 +57,7 @@ export function ContactInformation({ onContinue }: ContactInformationProps) {
 
       {investorType && (
         <button
-          onClick={() => onContinue(investorType)}
+          onClick={onContinue}
           className="w-full mt-4 bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors"
         >
           Continue
