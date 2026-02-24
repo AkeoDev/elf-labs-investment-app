@@ -32,6 +32,16 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Format phone to E.164 (e.g. +16135550119)
+    console.log("[v0] Raw phone value received:", JSON.stringify(phone))
+    let formattedPhone = phone ? String(phone).replace(/[^0-9+]/g, "") : ""
+    if (formattedPhone && !formattedPhone.startsWith("+")) {
+      formattedPhone = `+${formattedPhone}`
+    }
+    // Ensure only the first + is kept
+    formattedPhone = formattedPhone.replace(/(?!^)\+/g, "")
+    console.log("[v0] Formatted phone:", JSON.stringify(formattedPhone))
     
     // Validate investment amount
     const validation = validateInvestment(investmentAmount)
@@ -45,31 +55,37 @@ export async function POST(request: NextRequest) {
     // Calculate shares
     const calculation = calculateInvestment(investmentAmount)
     
-    // Create investor profile first (optional but recommended)
+    // Create investor profile first (optional - if this fails we still proceed)
     let profileId: number | undefined
     try {
       const profile = await createIndividualProfile({
         email,
         first_name: firstName,
         last_name: lastName,
-        phone_number: phone,
+        phone_number: formattedPhone,
       })
       profileId = profile.id
     } catch (profileError) {
       // Profile creation is optional, continue without it
-      console.log("[DealMaker] Could not create profile, continuing:", profileError)
+      // Profile creation is non-critical, continue without it
     }
     
     // Create the investor in DealMaker
-    const investor = await createInvestor({
+    const investorPayload: Record<string, unknown> = {
       email,
       first_name: firstName,
       last_name: lastName,
-      phone_number: phone,
+      phone_number: formattedPhone,
       investment_amount: investmentAmount,
       allocation_unit: "amount",
-      investor_profile_id: profileId,
-    })
+    }
+    if (profileId) {
+      investorPayload.investor_profile_id = profileId
+    }
+    
+    const investor = await createInvestor(
+      investorPayload as Parameters<typeof createInvestor>[0]
+    )
     
     // Get the access link for the investor to continue
     let accessLink: string | undefined
@@ -77,7 +93,7 @@ export async function POST(request: NextRequest) {
       const linkResponse = await getInvestorAccessLink(investor.id)
       accessLink = linkResponse.access_link
     } catch (linkError) {
-      console.log("[DealMaker] Could not get access link:", linkError)
+      // Access link retrieval is non-critical
     }
     
     return NextResponse.json({

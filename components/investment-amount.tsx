@@ -1,52 +1,93 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface InvestmentAmountProps {
   onContinue: (amount: number, shares: number, bonusShares: number) => void
 }
 
-const SHARE_PRICE = 2.25
-const MIN_INVESTMENT = 974.25
-
-const pricingTiers = [
-  { amount: 2500, bonusPercent: 5 },
-  { amount: 5000, bonusPercent: 10 },
-  { amount: 10000, bonusPercent: 15 },
-  { amount: 25000, bonusPercent: 20 },
-  { amount: 100000, bonusPercent: 20 },
+// Static fallbacks - used while loading or if API is unreachable
+const DEFAULT_SHARE_PRICE = 2.25
+const DEFAULT_MIN_INVESTMENT = 974.25
+const DEFAULT_TIERS = [
+  { minAmount: 2500, bonusPercent: 5 },
+  { minAmount: 5000, bonusPercent: 10 },
+  { minAmount: 10000, bonusPercent: 15 },
+  { minAmount: 25000, bonusPercent: 20 },
+  { minAmount: 100000, bonusPercent: 20 },
 ]
+
+interface DealConfig {
+  sharePrice: number
+  minInvestment: number
+  bonusTiers: { minAmount: number; bonusPercent: number }[]
+  source: "static" | "api"
+}
 
 export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
   const [selectedTier, setSelectedTier] = useState<number | null>(null)
   const [customAmount, setCustomAmount] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [dealConfig, setDealConfig] = useState<DealConfig>({
+    sharePrice: DEFAULT_SHARE_PRICE,
+    minInvestment: DEFAULT_MIN_INVESTMENT,
+    bonusTiers: DEFAULT_TIERS,
+    source: "static",
+  })
+
+  // Fetch live deal info on mount
+  useEffect(() => {
+    async function fetchDealInfo() {
+      try {
+        const res = await fetch("/api/dealmaker/deal-info")
+        if (res.ok) {
+          const data = await res.json()
+          setDealConfig({
+            sharePrice: data.sharePrice ?? DEFAULT_SHARE_PRICE,
+            minInvestment: data.minInvestment ?? DEFAULT_MIN_INVESTMENT,
+            bonusTiers: data.bonusTiers?.length ? data.bonusTiers : DEFAULT_TIERS,
+            source: data.source ?? "static",
+          })
+        }
+      } catch {
+        // Silently fall back to static values
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDealInfo()
+  }, [])
+
+  const { sharePrice, minInvestment, bonusTiers } = dealConfig
 
   const getActiveAmount = () => {
     if (selectedTier !== null) {
-      return pricingTiers[selectedTier].amount
+      return bonusTiers[selectedTier].minAmount
     }
     return Number.parseFloat(customAmount) || 0
   }
 
   const getActiveBonusPercent = () => {
     if (selectedTier !== null) {
-      return pricingTiers[selectedTier].bonusPercent
+      return bonusTiers[selectedTier].bonusPercent
     }
     const amount = Number.parseFloat(customAmount) || 0
-    if (amount >= 100000) return 20
-    if (amount >= 25000) return 20
-    if (amount >= 10000) return 15
-    if (amount >= 5000) return 10
-    if (amount >= 2500) return 5
-    return 0
+    // Find the highest qualifying tier
+    let percent = 0
+    for (const tier of bonusTiers) {
+      if (amount >= tier.minAmount) {
+        percent = tier.bonusPercent
+      }
+    }
+    return percent
   }
 
   const activeAmount = getActiveAmount()
   const bonusPercent = getActiveBonusPercent()
-  const baseShares = Math.floor(activeAmount / SHARE_PRICE)
+  const baseShares = Math.floor(activeAmount / sharePrice)
   const bonusShares = Math.floor(baseShares * (bonusPercent / 100))
 
-  const calculateShares = (amount: number) => Math.floor(amount / SHARE_PRICE)
+  const calculateShares = (amount: number) => Math.floor(amount / sharePrice)
   const calculateBonusShares = (amount: number, percent: number) =>
     Math.floor(calculateShares(amount) * (percent / 100))
 
@@ -55,18 +96,24 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
     setCustomAmount("")
   }
 
-  const canContinue = activeAmount >= MIN_INVESTMENT
+  const canContinue = activeAmount >= minInvestment
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between text-sm mb-2 gap-2">
-        <span className="text-gray-400">
-          Min. investment <span className="text-white font-semibold">${MIN_INVESTMENT.toFixed(2)}</span>
-        </span>
-        <span className="text-gray-400">
-          Share price <span className="text-white font-semibold">${SHARE_PRICE.toFixed(2)}</span>
-        </span>
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-2">
+          <div className="w-5 h-5 border-2 border-gray-500 border-t-white rounded-full animate-spin" />
+        </div>
+      ) : (
+        <div className="flex justify-between text-sm mb-2 gap-2">
+          <span className="text-gray-400">
+            Min. investment <span className="text-white font-semibold">${minInvestment.toFixed(2)}</span>
+          </span>
+          <span className="text-gray-400">
+            Share price <span className="text-white font-semibold">${sharePrice.toFixed(2)}</span>
+          </span>
+        </div>
+      )}
 
       <div className="bg-[#1a2744] rounded-lg py-6 px-4 mb-4">
         <div className="flex items-center justify-center gap-6">
@@ -83,9 +130,9 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
       </div>
 
       <div className="space-y-2">
-        {pricingTiers.map((tier, index) => {
-          const tierShares = calculateShares(tier.amount)
-          const tierBonusShares = calculateBonusShares(tier.amount, tier.bonusPercent)
+        {bonusTiers.map((tier, index) => {
+          const tierShares = calculateShares(tier.minAmount)
+          const tierBonusShares = calculateBonusShares(tier.minAmount, tier.bonusPercent)
           const isSelected = selectedTier === index
 
           return (
@@ -109,7 +156,7 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
                 {/* Amount and shares */}
                 <div className="text-left">
                   <p className={`font-bold text-lg ${isSelected ? "text-white" : "text-gray-200"}`}>
-                    Invest ${tier.amount.toLocaleString()}
+                    Invest ${tier.minAmount.toLocaleString()}
                   </p>
                   <p className="text-gray-400 text-base">{tierShares.toLocaleString()} Shares</p>
                 </div>
@@ -135,19 +182,30 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
 
       {/* Custom amount input */}
       <div className="mt-4">
-        <div className="bg-[#1a2744] rounded-lg px-4 py-3 flex items-center">
-          <label className="text-gray-500 text-sm">Amount: $</label>
+        <div className={`rounded-lg px-4 py-3 flex items-center transition-colors ${
+          selectedTier === null && customAmount ? "bg-[#1a2744] ring-1 ring-[#e91e8c]/40" : "bg-[#1a2744]"
+        }`}>
+          <label className="text-gray-400 text-sm whitespace-nowrap">Amount: $</label>
           <input
             type="text"
+            inputMode="decimal"
             placeholder="Enter custom amount"
             value={customAmount}
             onChange={(e) => {
-              setCustomAmount(e.target.value)
+              const val = e.target.value.replace(/[^0-9.]/g, "")
+              // Prevent multiple dots
+              if (val.split(".").length > 2) return
+              setCustomAmount(val)
               setSelectedTier(null)
             }}
             className="bg-transparent text-white text-base outline-none ml-2 flex-1 min-w-0"
           />
         </div>
+        {selectedTier === null && customAmount && activeAmount < minInvestment && (
+          <p className="text-red-400 text-xs mt-1.5 ml-1">
+            Minimum investment is ${minInvestment.toFixed(2)}
+          </p>
+        )}
       </div>
 
       {/* Total shares row */}

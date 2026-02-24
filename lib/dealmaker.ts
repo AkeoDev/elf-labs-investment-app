@@ -10,11 +10,11 @@
 // Configuration - Set these values from your DealMaker dashboard
 export const DEALMAKER_CONFIG = {
   // OAuth credentials from DealMaker Integrations page
-  clientId: process.env.DEALMAKER_CLIENT_ID || "",
-  clientSecret: process.env.DEALMAKER_CLIENT_SECRET || "",
+  clientId: (process.env.DEALMAKER_CLIENT_ID || "").trim(),
+  clientSecret: (process.env.DEALMAKER_CLIENT_SECRET || "").trim(),
   
   // Your deal ID (found in the URL of your deal dashboard)
-  dealId: process.env.DEALMAKER_DEAL_ID || "",
+  dealId: (process.env.DEALMAKER_DEAL_ID || "").trim(),
   
   // API endpoints
   baseUrl: "https://api.dealmaker.tech",
@@ -97,6 +97,7 @@ let cachedToken: { token: string; expiresAt: number } | null = null
 
 /**
  * Get an OAuth access token from DealMaker
+ * Scopes: deals.read, deals.write, deals.investors.read, deals.investors.write
  */
 export async function getAccessToken(): Promise<string> {
   // Return cached token if still valid
@@ -104,21 +105,33 @@ export async function getAccessToken(): Promise<string> {
     return cachedToken.token
   }
 
+  // Validate credentials are present
+  if (!DEALMAKER_CONFIG.clientId || !DEALMAKER_CONFIG.clientSecret) {
+    throw new Error(
+      "Missing DealMaker credentials. Set DEALMAKER_CLIENT_ID and DEALMAKER_CLIENT_SECRET environment variables."
+    )
+  }
+
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: DEALMAKER_CONFIG.clientId,
+    client_secret: DEALMAKER_CONFIG.clientSecret,
+    scope: "deals.read deals.write deals.investors.read deals.investors.write",
+  })
+
   const response = await fetch(DEALMAKER_CONFIG.tokenUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: DEALMAKER_CONFIG.clientId,
-      client_secret: DEALMAKER_CONFIG.clientSecret,
-      scope: "deals:read deals:write investors:read investors:write",
-    }),
+    body,
   })
 
   if (!response.ok) {
-    throw new Error(`Failed to get access token: ${response.statusText}`)
+    const errorBody = await response.text()
+    throw new Error(
+      `Failed to get access token: ${response.status} ${response.statusText} - ${errorBody}`
+    )
   }
 
   const data: DealMakerTokenResponse = await response.json()
@@ -152,8 +165,8 @@ async function apiRequest<T>(
   })
 
   if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`DealMaker API error: ${response.status} - ${error}`)
+    const errorText = await response.text()
+    throw new Error(`DealMaker API error: ${response.status} - ${errorText}`)
   }
 
   return response.json()
@@ -239,6 +252,18 @@ export async function getInvestorAccessLink(
   const id = dealId || DEALMAKER_CONFIG.dealId
   return apiRequest<{ access_link: string }>(
     `/deals/${id}/investors/${investorId}/otp_access_link`
+  )
+}
+
+/**
+ * Get incentive tiers for a deal
+ */
+export async function getIncentiveTiers(
+  dealId?: string
+): Promise<{ tiers: { min_amount: number; bonus_percent: number }[] }> {
+  const id = dealId || DEALMAKER_CONFIG.dealId
+  return apiRequest<{ tiers: { min_amount: number; bonus_percent: number }[] }>(
+    `/deals/${id}/incentive_tiers`
   )
 }
 
