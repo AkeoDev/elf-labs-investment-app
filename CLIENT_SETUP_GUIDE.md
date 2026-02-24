@@ -2,7 +2,7 @@
 
 This guide will walk you through everything from the moment you receive the project files to having the investment form live on your Webflow site. Even if you haven't worked with code before, you should be able to follow along.
 
----
+-- -
 
 ## What You're Working With
 
