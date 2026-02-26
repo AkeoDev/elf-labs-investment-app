@@ -84,20 +84,28 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
   }
 
   return (
-    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 sm:p-8 max-w-xl mx-auto">
+    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0D1425] p-4 sm:p-8 max-w-xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">
           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onBlur={() => setTouched({ ...touched, email: true })}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 ${
-              touched.email && (!formData.email.trim() || !isValidEmail) ? "border-red-500" : "border-gray-600"
-            }`}
-          />
+         <input
+  type="email"
+  placeholder="Email"
+  value={formData.email}
+  onBlur={() => setTouched({ ...touched, email: true })}
+  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+  className={`w-full rounded-lg py-4 pl-12 pr-4 
+    text-[#F6248833] 
+    placeholder-[#F8F8F8] 
+    bg-[#0E031EBF] 
+    focus:outline-none 
+    focus:border-[#F6248833] 
+    ${
+      touched.email && (!formData.email.trim() || !isValidEmail)
+        ? "border border-red-500"
+        : "border border-[#F6248833]"
+    }`}
+/>
           {touched.email && !formData.email.trim() && (
             <p className="text-red-400 text-xs mt-1 ml-1">Email is required</p>
           )}
@@ -114,8 +122,8 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
             value={formData.firstName}
             onBlur={() => setTouched({ ...touched, firstName: true })}
             onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-            className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 ${
-              touched.firstName && !formData.firstName.trim() ? "border-red-500" : "border-gray-600"
+            className={`w-full bg-[#0E031EBF] border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-[#F8F8F8] focus:outline-none focus:border-gray-400 ${
+              touched.firstName && !formData.firstName.trim() ? "border-red-500" : "border-[#F6248833]"
             }`}
           />
           {touched.firstName && !formData.firstName.trim() && (
@@ -131,8 +139,8 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
             value={formData.lastName}
             onBlur={() => setTouched({ ...touched, lastName: true })}
             onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-            className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 ${
-              touched.lastName && !formData.lastName.trim() ? "border-red-500" : "border-gray-600"
+            className={`w-full bg-[#0E031EBF] border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-[#F8F8F8] focus:outline-none focus:border-gray-400 ${
+              touched.lastName && !formData.lastName.trim() ? "border-red-500" : "border-[#F6248833]"
             }`}
           />
           {touched.lastName && !formData.lastName.trim() && (
@@ -142,13 +150,13 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
 
         <div className="relative" ref={dropdownRef}>
           <div className={`flex border rounded-lg overflow-hidden ${
-            touched.phone && formData.phone.trim().length < 7 ? "border-red-500" : "border-gray-600"
+            touched.phone && formData.phone.trim().length < 7 ? "border-red-500" : "border-[#F6248833]"
           }`}>
             {/* Country code dropdown */}
             <button
               type="button"
               onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-              className="flex items-center gap-1.5 px-3 py-4 border-r border-gray-600 hover:bg-white/5 transition-colors"
+              className="flex bg-[#0E031EBF] items-center gap-1.5 px-3 py-4 border-r border-gray-600 hover:bg-white/5 transition-colors"
             >
               <span className="text-lg">{countryCode.flag}</span>
               <span className="text-gray-300 text-sm">{countryCode.code}</span>
@@ -166,7 +174,7 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
                   const value = e.target.value.replace(/[^0-9]/g, "")
                   setFormData({ ...formData, phone: value })
                 }}
-                className="w-full bg-transparent py-4 pl-10 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none"
+                className="w-full bg-[#0E031EBF] py-4 pl-10 pr-4 text-gray-300 placeholder-[#F8F8F8] focus:outline-none"
               />
             </div>
           </div>
@@ -206,7 +214,7 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
           className={`w-full mt-6 font-semibold py-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 ${
             isFormComplete
               ? "bg-[#e91e8c] hover:bg-[#d11a7d] text-white cursor-pointer shadow-lg shadow-[#e91e8c]/20"
-              : "bg-gray-700/50 text-gray-500 cursor-not-allowed opacity-60"
+              : "bg-gray-700/50 text-[#F8F8F8] cursor-not-allowed opacity-60"
           }`}
         >
           Continue
@@ -214,7 +222,7 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
         </button>
       </form>
 
-      <p className="text-gray-500 text-sm text-center mt-6 leading-relaxed">
+      <p className="text-[#F8F8F8] text-sm text-center mt-6 leading-relaxed">
         By beginning the investment process, you consent to receive communications via email or SMS regarding updates to
         this offer, and may unsubscribe from non-transactional emails at any time.
       </p>

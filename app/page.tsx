@@ -22,7 +22,7 @@ export default function InvestmentPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0b14] flex flex-col">
+    <main className="min-h-screen bg-[#0D1425] flex flex-col">
       <header className="p-4 md:p-6">
         <div className="flex items-center gap-2">
           <span className="text-[#e91e8c] text-2xl">🔴</span>
