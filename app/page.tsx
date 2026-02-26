@@ -23,7 +23,7 @@ export default function InvestmentPage() {
 
   return (
     <main className="min-h-screen bg-[#0D1425] flex flex-col">
-      <header className="p-4 md:p-6">
+     {/* <header className="p-4 md:p-6">
         <div className="flex items-center gap-2">
           <span className="text-[#e91e8c] text-2xl">🔴</span>
           <span className="text-white font-medium">
@@ -31,10 +31,10 @@ export default function InvestmentPage() {
           </span>
         </div>
       </header>
-
+      */}
       <div className="flex-1 px-4 md:px-8 pb-8">
-        <h1 className="text-2xl md:text-3xl font-light text-white text-center mb-6">Elf Labs Investment Opportunity</h1>
-
+       {/*   <h1 className="text-2xl md:text-3xl font-light text-white text-center mb-6">Elf Labs Investment Opportunity</h1>
+           */}
         {step === "initial" ? (
           <InitialForm onSubmit={handleInitialSubmit} />
         ) : (
@@ -70,6 +70,7 @@ export default function InvestmentPage() {
           </>
         )}
       </div>
+{/*
 
       <footer className="p-4 md:p-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -86,6 +87,7 @@ export default function InvestmentPage() {
           <Facebook className="w-5 h-5 hover:text-white cursor-pointer" />
         </div>
       </footer>
+      */}
     </main>
   )
 }
