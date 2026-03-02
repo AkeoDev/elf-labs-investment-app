@@ -39,6 +39,14 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
   const [submitError, setSubmitError] = useState("")
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [accessLink, setAccessLink] = useState("")
+  const [investorData, setInvestorData] = useState<{
+    id: number
+    name: string
+    email: string
+    state: string
+    investmentAmount: number
+    numberOfSecurities: number
+  } | null>(null)
 
   const handleInvestmentComplete = (amount: number, shares: number, bonusShares: number) => {
     setInvestmentData({ amount, shares, bonusShares })
@@ -82,6 +90,16 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
         setCompletedSections([...completedSections, 4])
         if (data.investor?.accessLink) {
           setAccessLink(data.investor.accessLink)
+        }
+        if (data.investor) {
+          setInvestorData({
+            id: data.investor.id,
+            name: data.investor.name,
+            email: data.investor.email,
+            state: data.investor.state,
+            investmentAmount: data.investor.investmentAmount,
+            numberOfSecurities: data.investor.numberOfSecurities,
+          })
         }
       } else {
         setSubmitError(data.error || "Something went wrong. Please try again.")
@@ -320,29 +338,63 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
         <div className="py-4 space-y-4">
           {submitSuccess ? (
             /* Success state */
-            <div className="text-center py-6 space-y-4">
-              <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto" />
-              <div>
-                <h3 className="text-white text-xl font-semibold">Investment Submitted</h3>
-                <p className="text-gray-400 text-sm mt-2">
-                  Your investment of $
-                  {investmentData?.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}{" "}
-                  has been submitted successfully.
-                </p>
+            <div className="space-y-4">
+              {/* Header confirmation */}
+              <div className="flex items-center gap-3 py-3">
+                <CheckCircle2 className="w-6 h-6 text-green-400 shrink-0" />
+                <div>
+                  <h3 className="text-white font-semibold">Investment Submitted</h3>
+                  <p className="text-gray-400 text-sm">
+                    Your investment of $
+                    {investmentData?.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}{" "}
+                    has been submitted.
+                  </p>
+                </div>
               </div>
-              <p className="text-gray-500 text-xs">
-                You will receive an email at {userData.email} with next steps to complete your
-                investment, including document signing and payment processing.
-              </p>
+
+              {/* Investor details from DealMaker */}
+              {investorData && (
+                <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Investor ID</span>
+                    <span className="text-white font-mono">#{investorData.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Name</span>
+                    <span className="text-white">{investorData.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Status</span>
+                    <span className="text-[#e91e8c] capitalize">{investorData.state}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Amount</span>
+                    <span className="text-white">
+                      ${(investorData.investmentAmount || investmentData?.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Shares</span>
+                    <span className="text-white">{(investorData.numberOfSecurities ?? 0).toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* DealMaker OTP portal link */}
               {accessLink && (
-                <a
-                  href={accessLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-2 bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-3 px-8 rounded-full transition-colors"
-                >
-                  Continue to Complete Investment
-                </a>
+                <div className="space-y-3">
+                  <p className="text-gray-400 text-sm">
+                    Your investor profile has been created. Click below to verify your phone number
+                    and complete your investment:
+                  </p>
+                  <a
+                    href={accessLink}
+                    target="_self"
+                    className="flex items-center justify-center w-full bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors"
+                  >
+                    Verify Phone &amp; Complete Investment
+                  </a>
+                </div>
               )}
             </div>
           ) : (
