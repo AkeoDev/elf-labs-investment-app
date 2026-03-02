@@ -404,22 +404,22 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
 
       {/* Date of Birth */}
       <div className="relative">
-        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-        <div className="relative">
-          {!dateOfBirth && (
-            <span className="absolute left-12 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
-              Date of Birth
-            </span>
-          )}
+        <Calendar className="absolute left-4 top-[18px] w-4 h-4 text-gray-400 pointer-events-none" />
+        <div
+          className={`w-full bg-transparent border rounded-lg py-3 pl-12 pr-4 flex flex-col transition-colors ${
+            touched.dateOfBirth && !dateOfBirth ? "border-red-500" : "border-gray-600"
+          }`}
+        >
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-1">
+            Date of Birth
+          </span>
           <input
             type="date"
             value={dateOfBirth}
             max={maxDob}
             onBlur={() => setTouched((t) => ({ ...t, dateOfBirth: true }))}
             onChange={(e) => setDateOfBirth(e.target.value)}
-            className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 focus:outline-none focus:border-gray-400 transition-colors [color-scheme:dark] ${
-              touched.dateOfBirth && !dateOfBirth ? "border-red-500" : "border-gray-600"
-            }`}
+            className="bg-transparent text-gray-300 focus:outline-none [color-scheme:dark] text-sm w-full"
           />
         </div>
         {touched.dateOfBirth && !dateOfBirth && (

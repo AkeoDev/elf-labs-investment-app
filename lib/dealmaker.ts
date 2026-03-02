@@ -281,6 +281,33 @@ export async function getIncentiveTiers(
   )
 }
 
+// Types for countries endpoint
+export interface DealMakerState {
+  id: number
+  name: string
+  code: string
+}
+
+export interface DealMakerCountry {
+  id: number
+  name: string
+  code: string
+  states?: DealMakerState[]
+}
+
+/**
+ * Get all valid countries (and their states) from DealMaker.
+ * DealMaker may return a raw array OR wrap it in { countries: [...] }.
+ */
+export async function getCountries(): Promise<DealMakerCountry[]> {
+  const res = await apiRequest<DealMakerCountry[] | { countries: DealMakerCountry[] }>("/countries")
+  if (Array.isArray(res)) return res
+  if (res && Array.isArray((res as { countries?: DealMakerCountry[] }).countries)) {
+    return (res as { countries: DealMakerCountry[] }).countries
+  }
+  return []
+}
+
 /**
  * Create an individual investor profile
  */
