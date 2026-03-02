@@ -11,6 +11,7 @@ interface UserData {
   firstName: string
   lastName: string
   phone: string
+  countryCode: string
 }
 
 export function InvestmentFlow({ userData }: { userData: UserData }) {
@@ -52,6 +53,8 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
           firstName: userData.firstName,
           lastName: userData.lastName,
           phone: userData.phone,
+          countryCode: userData.countryCode,
+          investorType,
           investmentAmount: investmentData?.amount || 0,
         }),
       })

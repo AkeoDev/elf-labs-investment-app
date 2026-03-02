@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
       firstName,
       lastName,
       phone,
+      countryCode,
+      investorType,
       investmentAmount,
     } = body
     
@@ -55,6 +57,16 @@ export async function POST(request: NextRequest) {
     // Calculate shares
     const calculation = calculateInvestment(investmentAmount)
     
+    // Map UI investor type to DealMaker profile type
+    const profileTypeMap: Record<string, "individual" | "joint" | "corporation" | "trust"> = {
+      "Individual": "individual",
+      "Joint Tenants": "joint",
+      "Trust": "trust",
+      "Entity (LLC, Corporation, etc.)": "corporation",
+      "IRA / Self-Directed IRA": "individual",
+    }
+    const profileType = profileTypeMap[investorType] || "individual"
+
     // Create investor profile first (optional - if this fails we still proceed)
     let profileId: number | undefined
     try {
@@ -66,10 +78,9 @@ export async function POST(request: NextRequest) {
       })
       profileId = profile.id
     } catch (profileError) {
-      // Profile creation is optional, continue without it
       // Profile creation is non-critical, continue without it
     }
-    
+
     // Create the investor in DealMaker
     const investorPayload: Record<string, unknown> = {
       email,
@@ -77,16 +88,26 @@ export async function POST(request: NextRequest) {
       last_name: lastName,
       phone_number: formattedPhone,
       investment_amount: investmentAmount,
+      allocated_amount: investmentAmount,
+      number_of_securities: calculation.totalShares,
       allocation_unit: "amount",
+    }
+    if (countryCode) {
+      investorPayload.country_code = countryCode
+    }
+    if (investorType) {
+      investorPayload.tags = [profileType, investorType]
     }
     if (profileId) {
       investorPayload.investor_profile_id = profileId
     }
     
+    console.log("[DealMaker] Creating investor with payload:", JSON.stringify(investorPayload, null, 2))
     const investor = await createInvestor(
       investorPayload as Parameters<typeof createInvestor>[0]
     )
-    
+    console.log("[DealMaker] Investor created:", JSON.stringify(investor, null, 2))
+
     // Get the access link for the investor to continue
     let accessLink: string | undefined
     try {
@@ -116,8 +137,21 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("[DealMaker API] Error creating investor:", error)
+
+    // Extract the actual error message from DealMaker if available
+    const message = error instanceof Error ? error.message : ""
+    let userError = "Failed to create investor. Please try again."
+
+    if (message.includes("Invalid phone number")) {
+      userError = "Invalid phone number. Please use a full number with country code (e.g. +16135550119)."
+    } else if (message.includes("400")) {
+      // Pass through other 400 validation errors from DealMaker
+      const match = message.match(/"error":"([^"]+)"/)
+      if (match) userError = match[1]
+    }
+
     return NextResponse.json(
-      { error: "Failed to create investor. Please try again." },
+      { error: userError },
       { status: 500 }
     )
   }

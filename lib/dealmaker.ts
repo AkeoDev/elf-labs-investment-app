@@ -60,8 +60,12 @@ export interface CreateInvestorPayload {
   last_name: string
   phone_number?: string
   investment_amount: number
+  allocated_amount?: number
+  number_of_securities?: number
   allocation_unit?: "securities" | "amount"
   investor_profile_id?: number
+  country_code?: string
+  tags?: string[]
 }
 
 export interface DealMakerInvestor {

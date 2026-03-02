@@ -5,7 +5,6 @@ import { InitialForm } from "@/components/initial-form"
 import { InvestmentFlow } from "@/components/investment-flow"
 import { InvestorPerks } from "@/components/investor-perks"
 import { AdditionalInfo } from "@/components/additional-info"
-import { Youtube, Twitter, Linkedin, Instagram, Facebook } from "lucide-react"
 
 export default function InvestmentPage() {
   const [step, setStep] = useState<"initial" | "flow">("initial") // Default to initial for demo
@@ -14,6 +13,7 @@ export default function InvestmentPage() {
     firstName: "",
     lastName: "",
     phone: "",
+    countryCode: "",
   })
 
   const handleInitialSubmit = (data: typeof userData) => {
@@ -22,19 +22,9 @@ export default function InvestmentPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0D1425] flex flex-col">
-     {/* <header className="p-4 md:p-6">
-        <div className="flex items-center gap-2">
-          <span className="text-[#e91e8c] text-2xl">🔴</span>
-          <span className="text-white font-medium">
-            <span className="text-[#e91e8c]">elf</span> labs
-          </span>
-        </div>
-      </header>
-      */}
-      <div className="flex-1 px-4 md:px-8 pb-8">
-       {/*   <h1 className="text-2xl md:text-3xl font-light text-white text-center mb-6">Elf Labs Investment Opportunity</h1>
-           */}
+    <main className="min-h-screen bg-[#0a0b14] flex flex-col">
+      <div className="flex-1 px-4 md:px-8 py-8">
+
         {step === "initial" ? (
           <InitialForm onSubmit={handleInitialSubmit} />
         ) : (
@@ -70,24 +60,7 @@ export default function InvestmentPage() {
           </>
         )}
       </div>
-{/*
 
-      <footer className="p-4 md:p-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-[#e91e8c] text-xl">🔴</span>
-          <span className="text-white font-medium">
-            <span className="text-[#e91e8c]">elf</span> labs
-          </span>
-        </div>
-        <div className="flex items-center gap-4 text-gray-400">
-          <Youtube className="w-5 h-5 hover:text-white cursor-pointer" />
-          <Twitter className="w-5 h-5 hover:text-white cursor-pointer" />
-          <Linkedin className="w-5 h-5 hover:text-white cursor-pointer" />
-          <Instagram className="w-5 h-5 hover:text-white cursor-pointer" />
-          <Facebook className="w-5 h-5 hover:text-white cursor-pointer" />
-        </div>
-      </footer>
-      */}
     </main>
   )
 }

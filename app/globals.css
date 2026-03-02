@@ -124,3 +124,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrollbar for dark theme */
+.custom-scrollbar {
+  scrollbar-color: rgba(233, 30, 140, 0.3) transparent;
+  scrollbar-width: auto;
+}

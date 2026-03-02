@@ -318,10 +318,7 @@ If you need to rotate your DealMaker credentials:
 
 ---
 
-
 ## Need Help?
-
-
 
 If you run into issues not covered here, check:
 - DealMaker's documentation: https://docs.dealmaker.tech
@@ -330,5 +327,3 @@ If you run into issues not covered here, check:
 - Webflow's embed guide: https://university.webflow.com/lesson/custom-code-embed
 
 Or reach out to your development contact for assistance.
-
-
