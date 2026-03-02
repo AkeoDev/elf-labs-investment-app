@@ -25,8 +25,12 @@ export async function POST(request: NextRequest) {
       countryCode,
       investorType,
       investmentAmount,
+      address,
+      city,
+      state,
+      dateOfBirth,
     } = body
-    
+
     // Validate required fields
     if (!email || !firstName || !lastName || !investmentAmount) {
       return NextResponse.json(
@@ -75,6 +79,11 @@ export async function POST(request: NextRequest) {
         first_name: firstName,
         last_name: lastName,
         phone_number: formattedPhone,
+        date_of_birth: dateOfBirth,
+        address,
+        city,
+        state,
+        country: countryCode,
       })
       profileId = profile.id
     } catch (profileError) {
@@ -101,6 +110,10 @@ export async function POST(request: NextRequest) {
     if (profileId) {
       investorPayload.investor_profile_id = profileId
     }
+    if (dateOfBirth) investorPayload.date_of_birth = dateOfBirth
+    if (address) investorPayload.address = address
+    if (city) investorPayload.city = city
+    if (state) investorPayload.state = state
     
     console.log("[DealMaker] Creating investor with payload:", JSON.stringify(investorPayload, null, 2))
     const investor = await createInvestor(

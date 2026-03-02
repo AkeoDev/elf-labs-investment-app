@@ -52,6 +52,11 @@ export interface InvestorProfile {
   last_name: string
   phone_number?: string
   type: "individual" | "joint" | "corporation" | "trust"
+  date_of_birth?: string
+  address?: string
+  city?: string
+  state?: string
+  country?: string
 }
 
 export interface CreateInvestorPayload {
@@ -66,6 +71,11 @@ export interface CreateInvestorPayload {
   investor_profile_id?: number
   country_code?: string
   tags?: string[]
+  // Address & personal fields
+  date_of_birth?: string
+  address?: string
+  city?: string
+  state?: string
 }
 
 export interface DealMakerInvestor {

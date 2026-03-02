@@ -2,9 +2,21 @@
 
 import { useState } from "react"
 import { InvestmentAmount } from "@/components/investment-amount"
-import { ContactInformation } from "@/components/contact-information"
+import { ContactInformation, type ContactData } from "@/components/contact-information"
 import { AccordionSection } from "@/components/accordion-section"
-import { CheckCircle2, AlertCircle, User, Mail, Phone, DollarSign, BarChart3 } from "lucide-react"
+import {
+  CheckCircle2,
+  AlertCircle,
+  User,
+  Mail,
+  Phone,
+  DollarSign,
+  BarChart3,
+  MapPin,
+  Building2,
+  Globe,
+  Calendar,
+} from "lucide-react"
 
 interface UserData {
   email: string
@@ -21,7 +33,7 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
     shares: number
     bonusShares: number
   } | null>(null)
-  const [investorType, setInvestorType] = useState("")
+  const [contactData, setContactData] = useState<ContactData | null>(null)
   const [completedSections, setCompletedSections] = useState<number[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState("")
@@ -34,8 +46,8 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
     setActiveSection(2)
   }
 
-  const handleContactComplete = (type: string) => {
-    setInvestorType(type)
+  const handleContactComplete = (data: ContactData) => {
+    setContactData(data)
     setCompletedSections([...completedSections, 2])
     setActiveSection(3)
   }
@@ -53,9 +65,13 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
           firstName: userData.firstName,
           lastName: userData.lastName,
           phone: userData.phone,
-          countryCode: userData.countryCode,
-          investorType,
+          countryCode: contactData?.countryCode ?? userData.countryCode,
+          investorType: contactData?.investorType,
           investmentAmount: investmentData?.amount || 0,
+          address: contactData?.address,
+          city: contactData?.city,
+          state: contactData?.state,
+          dateOfBirth: contactData?.dateOfBirth,
         }),
       })
 
@@ -120,8 +136,27 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
         isActive={activeSection === 2}
         isCompleted={completedSections.includes(2)}
         onToggle={() => setActiveSection(activeSection === 2 ? 0 : 2)}
+        summary={
+          contactData && (
+            <div className="text-sm mt-2 space-y-0.5">
+              <p className="text-gray-400">
+                <span className="text-gray-500">Type: </span>
+                <span className="text-white">{contactData.investorType}</span>
+              </p>
+              <p className="text-gray-400">
+                <span className="text-gray-500">Location: </span>
+                <span className="text-white">
+                  {contactData.city}, {contactData.state}, {contactData.countryName}
+                </span>
+              </p>
+            </div>
+          )
+        }
       >
-        <ContactInformation onContinue={handleContactComplete} />
+        <ContactInformation
+          onContinue={handleContactComplete}
+          defaultCountryCode={userData.countryCode}
+        />
       </AccordionSection>
 
       {/* Section 3: Investor Confirmation */}
@@ -135,13 +170,15 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
         <div className="py-4 space-y-4">
           <p className="text-gray-400 text-sm">Please review your details before proceeding.</p>
 
-          {/* Investor details */}
+          {/* Personal details */}
           <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
             <div className="flex items-center gap-3">
               <User className="w-4 h-4 text-gray-500 shrink-0" />
               <div className="flex-1">
                 <p className="text-gray-500 text-xs">Name</p>
-                <p className="text-white text-sm">{userData.firstName} {userData.lastName}</p>
+                <p className="text-white text-sm">
+                  {userData.firstName} {userData.lastName}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -158,16 +195,68 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
                 <p className="text-white text-sm">{userData.phone}</p>
               </div>
             </div>
-            {investorType && (
+            {contactData?.investorType && (
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex-1">
                   <p className="text-gray-500 text-xs">Investor Type</p>
-                  <p className="text-white text-sm">{investorType}</p>
+                  <p className="text-white text-sm">{contactData.investorType}</p>
+                </div>
+              </div>
+            )}
+            {contactData?.dateOfBirth && (
+              <div className="flex items-center gap-3">
+                <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Date of Birth</p>
+                  <p className="text-white text-sm">
+                    {new Date(contactData.dateOfBirth + "T00:00:00").toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
                 </div>
               </div>
             )}
           </div>
+
+          {/* Address details */}
+          {contactData?.address && (
+            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Address</p>
+                  <p className="text-white text-sm">{contactData.address}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">City</p>
+                  <p className="text-white text-sm">{contactData.city}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Globe className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Country</p>
+                  <p className="text-white text-sm">
+                    {contactData.countryName}{" "}
+                    <span className="text-gray-500 text-xs">({contactData.countryCode})</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Globe className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">State / Province</p>
+                  <p className="text-white text-sm">{contactData.state}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Investment details */}
           {investmentData && (
@@ -236,11 +325,14 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
               <div>
                 <h3 className="text-white text-xl font-semibold">Investment Submitted</h3>
                 <p className="text-gray-400 text-sm mt-2">
-                  Your investment of ${investmentData?.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} has been submitted successfully.
+                  Your investment of $
+                  {investmentData?.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}{" "}
+                  has been submitted successfully.
                 </p>
               </div>
               <p className="text-gray-500 text-xs">
-                You will receive an email at {userData.email} with next steps to complete your investment, including document signing and payment processing.
+                You will receive an email at {userData.email} with next steps to complete your
+                investment, including document signing and payment processing.
               </p>
               {accessLink && (
                 <a
@@ -258,8 +350,9 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
             <>
               <div className="bg-[#1a2744]/60 rounded-lg p-4">
                 <p className="text-gray-300 text-sm leading-relaxed">
-                  By clicking the button below, your investment details will be submitted to our processing partner. 
-                  You will then receive instructions via email to complete document signing and payment.
+                  By clicking the button below, your investment details will be submitted to our
+                  processing partner. You will then receive instructions via email to complete
+                  document signing and payment.
                 </p>
               </div>
 
@@ -267,7 +360,10 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
                 <div className="flex justify-between items-center bg-[#1a2744]/40 rounded-lg px-4 py-3">
                   <span className="text-gray-400 text-sm">Total Investment</span>
                   <span className="text-white font-semibold">
-                    ${investmentData.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    $
+                    {investmentData.amount.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
               )}
@@ -301,7 +397,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
           Additional documents
         </a>
       </div>
-
     </div>
   )
 }

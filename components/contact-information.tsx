@@ -1,10 +1,22 @@
 "use client"
 
-import { useState } from "react"
-import { HelpCircle, ChevronDown } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { HelpCircle, ChevronDown, MapPin, Building2, Calendar } from "lucide-react"
+import { COUNTRIES } from "@/lib/countries"
 
 interface ContactInformationProps {
-  onContinue: (investorType: string) => void
+  onContinue: (data: ContactData) => void
+  defaultCountryCode?: string
+}
+
+export interface ContactData {
+  investorType: string
+  address: string
+  city: string
+  countryCode: string
+  countryName: string
+  state: string
+  dateOfBirth: string
 }
 
 const investorTypes = [
@@ -15,54 +27,287 @@ const investorTypes = [
   "IRA / Self-Directed IRA",
 ]
 
-export function ContactInformation({ onContinue }: ContactInformationProps) {
+export function ContactInformation({ onContinue, defaultCountryCode }: ContactInformationProps) {
+  const defaultCountry =
+    COUNTRIES.find((c) => c.code === defaultCountryCode) ?? COUNTRIES[0]
+
   const [investorType, setInvestorType] = useState("")
-  const [isOpen, setIsOpen] = useState(false)
+  const [investorTypeOpen, setInvestorTypeOpen] = useState(false)
+  const [address, setAddress] = useState("")
+  const [city, setCity] = useState("")
+  const [selectedCountry, setSelectedCountry] = useState(defaultCountry)
+  const [countryOpen, setCountryOpen] = useState(false)
+  const [countrySearch, setCountrySearch] = useState("")
+  const [state, setState] = useState("")
+  const [dateOfBirth, setDateOfBirth] = useState("")
+
+  const [touched, setTouched] = useState({
+    investorType: false,
+    address: false,
+    city: false,
+    state: false,
+    dateOfBirth: false,
+  })
+
+  const countryDropdownRef = useRef<HTMLDivElement>(null)
+  const countrySearchRef = useRef<HTMLInputElement>(null)
+
+  // Close country dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setCountryOpen(false)
+        setCountrySearch("")
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Focus search on open
+  useEffect(() => {
+    if (countryOpen) {
+      setTimeout(() => countrySearchRef.current?.focus(), 50)
+    }
+  }, [countryOpen])
+
+  const filteredCountries = COUNTRIES.filter(
+    (c) =>
+      c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+      c.code.toLowerCase().includes(countrySearch.toLowerCase())
+  )
+
+  // Max DOB = 18 years ago from today
+  const maxDob = (() => {
+    const d = new Date()
+    d.setFullYear(d.getFullYear() - 18)
+    return d.toISOString().split("T")[0]
+  })()
+
+  const isFormComplete =
+    !!investorType &&
+    address.trim().length > 0 &&
+    city.trim().length > 0 &&
+    state.trim().length > 0 &&
+    dateOfBirth.length > 0
+
+  const handleContinue = () => {
+    setTouched({ investorType: true, address: true, city: true, state: true, dateOfBirth: true })
+    if (!isFormComplete) return
+    onContinue({
+      investorType,
+      address,
+      city,
+      countryCode: selectedCountry.code,
+      countryName: selectedCountry.name,
+      state,
+      dateOfBirth,
+    })
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <span className="text-gray-300">Who is making the investment?</span>
-        <HelpCircle className="w-4 h-4 text-gray-500" />
-      </div>
-
-      <div className="relative">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full bg-[#1a1f35] border border-gray-600 rounded-lg py-4 px-4 text-left flex items-center justify-between"
-        >
-          <span className={investorType ? "text-white" : "text-gray-500"}>
-            {investorType || "Select an investor type"}
-          </span>
-          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-        </button>
-
-        {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1f35] border border-gray-600 rounded-lg overflow-hidden z-10">
-            {investorTypes.map((type) => (
-              <button
-                key={type}
-                onClick={() => {
-                  setInvestorType(type)
-                  setIsOpen(false)
-                }}
-                className="w-full py-3 px-4 text-left text-gray-300 hover:bg-[#252a42] transition-colors"
-              >
-                {type}
-              </button>
-            ))}
-          </div>
+    <div className="space-y-4 py-2">
+      {/* Investor Type */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-gray-400 text-sm">Who is making the investment?</span>
+          <HelpCircle className="w-3.5 h-3.5 text-gray-500" />
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setInvestorTypeOpen(!investorTypeOpen)}
+            className={`w-full bg-[#1a1f35] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors ${
+              touched.investorType && !investorType ? "border-red-500" : "border-gray-600 hover:border-gray-400"
+            }`}
+          >
+            <span className={investorType ? "text-white" : "text-gray-500"}>
+              {investorType || "Select an investor type"}
+            </span>
+            <ChevronDown
+              className={`w-5 h-5 text-gray-400 transition-transform ${investorTypeOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {investorTypeOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1f35] border border-gray-600 rounded-lg overflow-hidden z-20">
+              {investorTypes.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => {
+                    setInvestorType(type)
+                    setInvestorTypeOpen(false)
+                  }}
+                  className={`w-full py-3 px-4 text-left transition-colors ${
+                    investorType === type
+                      ? "bg-white/10 text-white"
+                      : "text-gray-300 hover:bg-[#252a42]"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {touched.investorType && !investorType && (
+          <p className="text-red-400 text-xs mt-1 ml-1">Please select an investor type</p>
         )}
       </div>
 
-      {investorType && (
-        <button
-          onClick={() => onContinue(investorType)}
-          className="w-full mt-4 bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors"
-        >
-          Continue
-        </button>
-      )}
+      {/* Street Address */}
+      <div className="relative">
+        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Street Address"
+          value={address}
+          onBlur={() => setTouched((t) => ({ ...t, address: true }))}
+          onChange={(e) => setAddress(e.target.value)}
+          className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
+            touched.address && !address.trim() ? "border-red-500" : "border-gray-600"
+          }`}
+        />
+        {touched.address && !address.trim() && (
+          <p className="text-red-400 text-xs mt-1 ml-1">Address is required</p>
+        )}
+      </div>
+
+      {/* City */}
+      <div className="relative">
+        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="City"
+          value={city}
+          onBlur={() => setTouched((t) => ({ ...t, city: true }))}
+          onChange={(e) => setCity(e.target.value)}
+          className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
+            touched.city && !city.trim() ? "border-red-500" : "border-gray-600"
+          }`}
+        />
+        {touched.city && !city.trim() && (
+          <p className="text-red-400 text-xs mt-1 ml-1">City is required</p>
+        )}
+      </div>
+
+      {/* Country + State row */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Country Dropdown */}
+        <div className="relative" ref={countryDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setCountryOpen(!countryOpen)}
+            className="w-full bg-transparent border border-gray-600 hover:border-gray-400 rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none"
+          >
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">
+                Country
+              </span>
+              <span className="text-gray-300 text-sm truncate">{selectedCountry.name}</span>
+            </div>
+            <ChevronDown
+              className={`w-4 h-4 text-gray-400 shrink-0 ml-2 transition-transform ${countryOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {countryOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
+              <div className="p-2 border-b border-gray-600">
+                <input
+                  ref={countrySearchRef}
+                  type="text"
+                  placeholder="Search country..."
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                  className="w-full bg-[#0f1629] border border-gray-600 rounded px-3 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400"
+                />
+              </div>
+              <div className="max-h-48 overflow-y-auto">
+                {filteredCountries.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">No results</p>
+                ) : (
+                  filteredCountries.map((c) => (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCountry(c)
+                        setCountryOpen(false)
+                        setCountrySearch("")
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
+                        c.code === selectedCountry.code
+                          ? "bg-white/10 text-white"
+                          : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span>{c.name}</span>
+                      <span className="text-gray-500 text-xs ml-2">{c.code}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* State / Province */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="State / Province"
+            value={state}
+            onBlur={() => setTouched((t) => ({ ...t, state: true }))}
+            onChange={(e) => setState(e.target.value)}
+            className={`w-full bg-transparent border rounded-lg py-4 px-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
+              touched.state && !state.trim() ? "border-red-500" : "border-gray-600"
+            }`}
+          />
+          {touched.state && !state.trim() && (
+            <p className="text-red-400 text-xs mt-1 ml-1">Required</p>
+          )}
+        </div>
+      </div>
+
+      {/* Date of Birth */}
+      <div className="relative">
+        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <div className="relative">
+          {!dateOfBirth && (
+            <span className="absolute left-12 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">
+              Date of Birth
+            </span>
+          )}
+          <input
+            type="date"
+            value={dateOfBirth}
+            max={maxDob}
+            onBlur={() => setTouched((t) => ({ ...t, dateOfBirth: true }))}
+            onChange={(e) => setDateOfBirth(e.target.value)}
+            className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 focus:outline-none focus:border-gray-400 transition-colors [color-scheme:dark] ${
+              touched.dateOfBirth && !dateOfBirth ? "border-red-500" : "border-gray-600"
+            }`}
+          />
+        </div>
+        {touched.dateOfBirth && !dateOfBirth && (
+          <p className="text-red-400 text-xs mt-1 ml-1">Date of birth is required</p>
+        )}
+      </div>
+
+      {/* Continue */}
+      <button
+        onClick={handleContinue}
+        disabled={!isFormComplete}
+        className={`w-full mt-2 font-medium py-4 rounded-full transition-colors ${
+          isFormComplete
+            ? "bg-[#e91e8c] hover:bg-[#d11a7d] text-white"
+            : "bg-gray-700/50 text-gray-500 cursor-not-allowed"
+        }`}
+      >
+        Continue
+      </button>
     </div>
   )
 }
