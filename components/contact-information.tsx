@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { HelpCircle, ChevronDown, MapPin, Building2, Calendar } from "lucide-react"
-import { COUNTRIES } from "@/lib/countries"
+import { COUNTRIES, STATIC_STATES } from "@/lib/countries"
 
 interface ContactInformationProps {
   onContinue: (data: ContactData) => void
@@ -129,7 +129,13 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const hasStates = selectedCountry.states && selectedCountry.states.length > 0
+  // Prefer DealMaker states; fall back to static list for known countries
+  const countryStates: { id?: number; name: string; code: string }[] =
+    selectedCountry.states?.length
+      ? selectedCountry.states
+      : (STATIC_STATES[selectedCountry.code] ?? [])
+
+  const hasStates = countryStates.length > 0
 
   // Max DOB = 18 years ago
   const maxDob = (() => {
@@ -313,8 +319,8 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
           {stateOpen && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
               {hasStates ? (
-                <div className="max-h-56 overflow-y-auto">
-                  {selectedCountry.states.map((s) => (
+                <div className="max-h-56 overflow-y-auto custom-scrollbar">
+                  {countryStates.map((s) => (
                     <button
                       key={s.code}
                       type="button"
