@@ -26,8 +26,6 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
     phone: "",
   })
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
-  const [countrySearch, setCountrySearch] = useState("")
-  const searchInputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const [touched, setTouched] = useState({
     email: false,
@@ -65,19 +63,11 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowCountryDropdown(false)
-        setCountrySearch("")
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
-
-  const filteredList = phoneList.filter(
-    (c) =>
-      c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-      c.phoneCode.includes(countrySearch) ||
-      c.isoCode.toLowerCase().includes(countrySearch.toLowerCase())
-  )
 
   const isValidEmail = formData.email.includes("@") && formData.email.includes(".")
   const isFormComplete =
@@ -199,26 +189,14 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
           {/* Country dropdown menu */}
           {showCountryDropdown && (
             <div className="absolute z-50 mt-1 w-full bg-[#1a2744] border border-gray-600 rounded-lg shadow-lg overflow-hidden">
-              <div className="p-2 border-b border-gray-600">
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search country..."
-                  value={countrySearch}
-                  onChange={(e) => setCountrySearch(e.target.value)}
-                  className="w-full bg-[#0f1629] border border-gray-600 rounded px-3 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400"
-                  autoFocus
-                />
-              </div>
               <div ref={listRef} className="max-h-52 overflow-y-auto custom-scrollbar">
-                {filteredList.map((c) => (
+                {phoneList.map((c) => (
                   <button
                     key={`${c.isoCode}-${c.phoneCode}`}
                     type="button"
                     onClick={() => {
                       setSelectedCountry(c)
                       setShowCountryDropdown(false)
-                      setCountrySearch("")
                     }}
                     className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/10 transition-colors ${
                       c.isoCode === selectedCountry.isoCode ? "bg-white/5 text-white" : "text-gray-300"
