@@ -55,10 +55,8 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
   const [city, setCity] = useState("")
   const [selectedCountry, setSelectedCountry] = useState<ApiCountry>(defaultCountry)
   const [countryOpen, setCountryOpen] = useState(false)
-  const [countrySearch, setCountrySearch] = useState("")
   const [state, setState] = useState("")
   const [stateOpen, setStateOpen] = useState(false)
-  const [stateSearch, setStateSearch] = useState("")
   const [dateOfBirth, setDateOfBirth] = useState("")
 
   const [touched, setTouched] = useState({
@@ -71,8 +69,6 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
 
   const countryDropdownRef = useRef<HTMLDivElement>(null)
   const stateDropdownRef = useRef<HTMLDivElement>(null)
-  const countrySearchRef = useRef<HTMLInputElement>(null)
-  const stateSearchRef = useRef<HTMLInputElement>(null)
 
   // Fetch live countries from DealMaker
   useEffect(() => {
@@ -83,7 +79,6 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
           const data = await res.json()
           if (Array.isArray(data.countries) && data.countries.length > 0) {
             setCountries(data.countries)
-            // Re-select the default country from the live list
             const live = data.countries.find(
               (c: ApiCountry) => c.code === defaultCountryCode
             )
@@ -109,41 +104,16 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     function handleClickOutside(event: MouseEvent) {
       if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
         setCountryOpen(false)
-        setCountrySearch("")
       }
       if (stateDropdownRef.current && !stateDropdownRef.current.contains(event.target as Node)) {
         setStateOpen(false)
-        setStateSearch("")
       }
-
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Focus search when country dropdown opens
-  useEffect(() => {
-    if (countryOpen) setTimeout(() => countrySearchRef.current?.focus(), 50)
-  }, [countryOpen])
-
-  // Focus search / input when state dropdown opens
-  useEffect(() => {
-    if (stateOpen) setTimeout(() => stateSearchRef.current?.focus(), 50)
-  }, [stateOpen])
-
-  const filteredCountries = countries.filter(
-    (c) =>
-      c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-      c.code.toLowerCase().includes(countrySearch.toLowerCase())
-  )
-
   const hasStates = selectedCountry.states && selectedCountry.states.length > 0
-
-  const filteredStates = (selectedCountry.states ?? []).filter(
-    (s) =>
-      s.name.toLowerCase().includes(stateSearch.toLowerCase()) ||
-      s.code.toLowerCase().includes(stateSearch.toLowerCase())
-  )
 
   // Max DOB = 18 years ago
   const maxDob = (() => {
@@ -278,46 +248,31 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
 
           {countryOpen && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
-              <div className="p-2 border-b border-gray-600">
-                <input
-                  ref={countrySearchRef}
-                  type="text"
-                  placeholder="Search country..."
-                  value={countrySearch}
-                  onChange={(e) => setCountrySearch(e.target.value)}
-                  className="w-full bg-[#0f1629] border border-gray-600 rounded px-3 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400"
-                />
-              </div>
-              <div className="max-h-48 overflow-y-auto">
-                {filteredCountries.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-4">No results</p>
-                ) : (
-                  filteredCountries.map((c) => (
-                    <button
-                      key={c.code}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCountry(c)
-                        setCountryOpen(false)
-                        setCountrySearch("")
-                      }}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
-                        c.code === selectedCountry.code
-                          ? "bg-white/10 text-white"
-                          : "text-gray-300 hover:bg-white/5"
-                      }`}
-                    >
-                      <span>{c.name}</span>
-                      <span className="text-gray-500 text-xs ml-2">{c.code}</span>
-                    </button>
-                  ))
-                )}
+              <div className="max-h-56 overflow-y-auto">
+                {countries.map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCountry(c)
+                      setCountryOpen(false)
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
+                      c.code === selectedCountry.code
+                        ? "bg-white/10 text-white"
+                        : "text-gray-300 hover:bg-white/5"
+                    }`}
+                  >
+                    <span>{c.name}</span>
+                    <span className="text-gray-500 text-xs ml-2">{c.code}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* State / Province — always a dropdown; searchable list when DealMaker provides states, free-text input otherwise */}
+        {/* State / Province */}
         <div className="relative" ref={stateDropdownRef}>
           <button
             type="button"
@@ -342,45 +297,29 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
           {stateOpen && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
               {hasStates ? (
-                <>
-                  <div className="p-2 border-b border-gray-600">
-                    <input
-                      ref={stateSearchRef}
-                      type="text"
-                      placeholder="Search state..."
-                      value={stateSearch}
-                      onChange={(e) => setStateSearch(e.target.value)}
-                      className="w-full bg-[#0f1629] border border-gray-600 rounded px-3 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400"
-                    />
-                  </div>
-                  <div className="max-h-48 overflow-y-auto">
-                    {filteredStates.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-4">No results</p>
-                    ) : (
-                      filteredStates.map((s) => (
-                        <button
-                          key={s.code}
-                          type="button"
-                          onClick={() => { setState(s.name); setStateOpen(false); setStateSearch("") }}
-                          className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
-                            state === s.name ? "bg-white/10 text-white" : "text-gray-300 hover:bg-white/5"
-                          }`}
-                        >
-                          <span>{s.name}</span>
-                          <span className="text-gray-500 text-xs">{s.code}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </>
+                <div className="max-h-56 overflow-y-auto">
+                  {selectedCountry.states.map((s) => (
+                    <button
+                      key={s.code}
+                      type="button"
+                      onClick={() => { setState(s.name); setStateOpen(false) }}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
+                        state === s.name ? "bg-white/10 text-white" : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span>{s.name}</span>
+                      <span className="text-gray-500 text-xs">{s.code}</span>
+                    </button>
+                  ))}
+                </div>
               ) : (
                 <div className="p-2">
                   <input
-                    ref={stateSearchRef}
                     type="text"
                     placeholder="Type state / province..."
                     value={state}
                     autoComplete="address-level1"
+                    autoFocus
                     onChange={(e) => setState(e.target.value)}
                     onBlur={() => setTouched((t) => ({ ...t, state: true }))}
                     onKeyDown={(e) => { if (e.key === "Enter" && state.trim()) setStateOpen(false) }}
