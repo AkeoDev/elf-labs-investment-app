@@ -68,6 +68,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
   })
 
   const countryDropdownRef = useRef<HTMLDivElement>(null)
+  const countryListRef = useRef<HTMLDivElement>(null)
   const stateDropdownRef = useRef<HTMLDivElement>(null)
 
   // Fetch live countries from DealMaker
@@ -98,6 +99,21 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
   useEffect(() => {
     setState("")
   }, [selectedCountry.code])
+
+  // Typeahead: pressing a letter jumps to the first country starting with it
+  useEffect(() => {
+    if (!countryOpen) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!/^[a-zA-Z]$/.test(e.key)) return
+      const letter = e.key.toLowerCase()
+      const idx = countries.findIndex((c) => c.name.toLowerCase().startsWith(letter))
+      if (idx === -1) return
+      const buttons = countryListRef.current?.querySelectorAll("button")
+      buttons?.[idx]?.scrollIntoView({ block: "nearest" })
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [countryOpen, countries])
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -248,7 +264,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
 
           {countryOpen && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
-              <div className="max-h-56 overflow-y-auto">
+              <div ref={countryListRef} className="max-h-52 overflow-y-auto custom-scrollbar">
                 {countries.map((c) => (
                   <button
                     key={c.code}
