@@ -140,23 +140,20 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
 
   const hasStates = countryStates.length > 0
 
-  // Max DOB = 18 years ago
-  const maxDob = (() => {
-    const d = new Date()
-    d.setFullYear(d.getFullYear() - 18)
-    return d.toISOString().split("T")[0]
-  })()
-
   const isFormComplete =
     !!investorType &&
     address.trim().length > 0 &&
     city.trim().length > 0 &&
     state.trim().length > 0 &&
-    dateOfBirth.length > 0
+    dateOfBirth.length === 10
 
   const handleContinue = () => {
     setTouched({ investorType: true, address: true, city: true, state: true, dateOfBirth: true })
     if (!isFormComplete) return
+    // Convert DD/MM/YYYY → YYYY-MM-DD (ISO) for the API
+    const [dd, mm, yyyy] = dateOfBirth.split("/")
+    const isoDob = `${yyyy}-${mm}-${dd}`
+
     onContinue({
       investorType,
       address,
@@ -164,7 +161,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
       countryCode: selectedCountry.code,
       countryName: selectedCountry.name,
       state,
-      dateOfBirth,
+      dateOfBirth: isoDob,
     })
   }
 
@@ -363,27 +360,40 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
 
       {/* Date of Birth */}
       <div className="relative">
-        <Calendar className="absolute left-4 top-[18px] w-4 h-4 text-gray-400 pointer-events-none" />
-        <div
-          className={`w-full bg-transparent border rounded-lg py-3 pl-12 pr-4 flex flex-col transition-colors ${
-            touched.dateOfBirth && !dateOfBirth ? "border-red-500" : "border-gray-600"
+        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="Date of Birth (DD/MM/YYYY)"
+          value={dateOfBirth}
+          autoComplete="bday"
+          onBlur={() => setTouched((t) => ({ ...t, dateOfBirth: true }))}
+          onChange={(e) => {
+            // Allow only digits and slashes, auto-insert slashes at positions 2 and 5
+            let v = e.target.value.replace(/[^0-9/]/g, "")
+            // Remove slashes to re-format cleanly
+            const digits = v.replace(/\//g, "")
+            if (digits.length <= 2) {
+              v = digits
+            } else if (digits.length <= 4) {
+              v = `${digits.slice(0, 2)}/${digits.slice(2)}`
+            } else {
+              v = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`
+            }
+            setDateOfBirth(v)
+          }}
+          maxLength={10}
+          className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
+            touched.dateOfBirth && (!dateOfBirth || (dateOfBirth.length > 0 && dateOfBirth.length < 10))
+              ? "border-red-500"
+              : "border-gray-600"
           }`}
-        >
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-1">
-            Date of Birth
-          </span>
-          <input
-            type="date"
-            value={dateOfBirth}
-            max={maxDob}
-            autoComplete="bday"
-            onBlur={() => setTouched((t) => ({ ...t, dateOfBirth: true }))}
-            onChange={(e) => setDateOfBirth(e.target.value)}
-            className="bg-transparent text-gray-300 focus:outline-none [color-scheme:dark] text-sm w-full"
-          />
-        </div>
+        />
         {touched.dateOfBirth && !dateOfBirth && (
           <p className="text-red-400 text-xs mt-1 ml-1">Date of birth is required</p>
+        )}
+        {touched.dateOfBirth && dateOfBirth.length > 0 && dateOfBirth.length < 10 && (
+          <p className="text-red-400 text-xs mt-1 ml-1">Enter a complete date (DD/MM/YYYY)</p>
         )}
       </div>
 
