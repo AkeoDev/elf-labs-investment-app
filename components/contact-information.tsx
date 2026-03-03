@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { HelpCircle, ChevronDown, MapPin, Building2, Calendar } from "lucide-react"
-import { COUNTRIES, STATIC_STATES } from "@/lib/countries"
+import { COUNTRIES, STATIC_STATES, PHONE_CODES } from "@/lib/countries"
 
 interface ContactInformationProps {
   onContinue: (data: ContactData) => void
@@ -106,14 +106,14 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     function handleKeyDown(e: KeyboardEvent) {
       if (!/^[a-zA-Z]$/.test(e.key)) return
       const letter = e.key.toLowerCase()
-      const idx = countries.findIndex((c) => c.name.toLowerCase().startsWith(letter))
+      const idx = displayCountries.findIndex((c) => c.name.toLowerCase().startsWith(letter))
       if (idx === -1) return
       const buttons = countryListRef.current?.querySelectorAll("button")
       buttons?.[idx]?.scrollIntoView({ block: "nearest" })
     }
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [countryOpen, countries])
+  }, [countryOpen, displayCountries])
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -128,6 +128,9 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Same country set as the phone prefix dropdown (only countries with a known dial code)
+  const displayCountries = countries.filter((c) => !!PHONE_CODES[c.code])
 
   // Prefer DealMaker states; fall back to static list for known countries
   const countryStates: { id?: number; name: string; code: string }[] =
@@ -271,7 +274,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
           {countryOpen && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
               <div ref={countryListRef} className="max-h-52 overflow-y-auto custom-scrollbar">
-                {countries.map((c) => (
+                {displayCountries.map((c) => (
                   <button
                     key={c.code}
                     type="button"
