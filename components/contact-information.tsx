@@ -95,6 +95,9 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     fetchCountries()
   }, [defaultCountryCode])
 
+  // Same country set as the phone prefix dropdown (only countries with a known dial code)
+  const displayCountries = countries.filter((c) => !!PHONE_CODES[c.code])
+
   // Reset state when country changes
   useEffect(() => {
     setState("")
@@ -128,9 +131,6 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
-
-  // Same country set as the phone prefix dropdown (only countries with a known dial code)
-  const displayCountries = countries.filter((c) => !!PHONE_CODES[c.code])
 
   // Prefer DealMaker states; fall back to static list for known countries
   const countryStates: { id?: number; name: string; code: string }[] =
