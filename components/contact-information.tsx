@@ -69,10 +69,20 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     dateOfBirth: false,
   })
 
+  // Google Places autocomplete
+  const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([])
+  const [predictionsOpen, setPredictionsOpen] = useState(false)
+  const [mapsLoaded, setMapsLoaded] = useState(false)
+
   const countryDropdownRef = useRef<HTMLDivElement>(null)
   const stateDropdownRef = useRef<HTMLDivElement>(null)
+  const addressDropdownRef = useRef<HTMLDivElement>(null)
   const countrySearchRef = useRef<HTMLInputElement>(null)
   const stateSearchRef = useRef<HTMLInputElement>(null)
+  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null)
+  const placesService = useRef<google.maps.places.PlacesService | null>(null)
+  // Holds a state name to restore after country change resets it
+  const pendingStateRef = useRef<string | null>(null)
 
   // Fetch live countries from DealMaker
   useEffect(() => {
@@ -99,9 +109,74 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     fetchCountries()
   }, [defaultCountryCode])
 
-  // Reset state when country changes
+  // Load Google Maps Places script once
   useEffect(() => {
-    setState("")
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) return
+
+    const init = () => {
+      autocompleteService.current = new window.google.maps.places.AutocompleteService()
+      placesService.current = new window.google.maps.places.PlacesService(
+        document.createElement("div")
+      )
+      setMapsLoaded(true)
+    }
+
+    if (window.google?.maps?.places) {
+      init()
+      return
+    }
+
+    const callbackName = "__placesInit"
+    ;(window as unknown as Record<string, unknown>)[callbackName] = init
+
+    if (!document.querySelector("script[data-gmaps]")) {
+      const script = document.createElement("script")
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=${callbackName}`
+      script.async = true
+      script.dataset.gmaps = "true"
+      document.head.appendChild(script)
+    }
+  }, [])
+
+  // Fetch address predictions with 300 ms debounce
+  useEffect(() => {
+    if (!mapsLoaded || !autocompleteService.current || address.length < 3) {
+      setPredictions([])
+      setPredictionsOpen(false)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      autocompleteService.current!.getPlacePredictions(
+        { input: address, types: ["address"] },
+        (results, status) => {
+          if (
+            status === window.google.maps.places.PlacesServiceStatus.OK &&
+            results &&
+            results.length > 0
+          ) {
+            setPredictions(results)
+            setPredictionsOpen(true)
+          } else {
+            setPredictions([])
+            setPredictionsOpen(false)
+          }
+        }
+      )
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [address, mapsLoaded])
+
+  // Reset state when country changes; restore pending state if set by place selection
+  useEffect(() => {
+    if (pendingStateRef.current !== null) {
+      setState(pendingStateRef.current)
+      pendingStateRef.current = null
+    } else {
+      setState("")
+    }
   }, [selectedCountry.code])
 
   // Close dropdowns on outside click
@@ -114,6 +189,9 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
       if (stateDropdownRef.current && !stateDropdownRef.current.contains(event.target as Node)) {
         setStateOpen(false)
         setStateSearch("")
+      }
+      if (addressDropdownRef.current && !addressDropdownRef.current.contains(event.target as Node)) {
+        setPredictionsOpen(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -157,6 +235,54 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
     city.trim().length > 0 &&
     state.trim().length > 0 &&
     dateOfBirth.length > 0
+
+  const handleSelectPrediction = (prediction: google.maps.places.AutocompletePrediction) => {
+    // Show the street portion only (not the full formatted address)
+    setAddress(prediction.structured_formatting.main_text)
+    setPredictionsOpen(false)
+    setPredictions([])
+
+    // Fetch full place details to auto-fill city, state, country
+    placesService.current?.getDetails(
+      { placeId: prediction.place_id, fields: ["address_components"] },
+      (place, status) => {
+        if (
+          status !== window.google.maps.places.PlacesServiceStatus.OK ||
+          !place?.address_components
+        )
+          return
+
+        let cityVal = ""
+        let stateVal = ""
+        let countryCode = ""
+
+        for (const component of place.address_components) {
+          if (component.types.includes("locality")) cityVal = component.long_name
+          if (component.types.includes("administrative_area_level_1")) stateVal = component.long_name
+          if (component.types.includes("country")) countryCode = component.short_name
+        }
+
+        if (cityVal) setCity(cityVal)
+
+        if (countryCode) {
+          const matchedCountry = countries.find((c) => c.code === countryCode)
+          if (matchedCountry) {
+            // Find state by name in DealMaker list (if available), else use raw name
+            const matchedState =
+              matchedCountry.states?.find(
+                (s) => s.name.toLowerCase() === stateVal.toLowerCase()
+              )?.name ?? stateVal
+
+            // pendingStateRef is read by the selectedCountry useEffect after reset
+            pendingStateRef.current = matchedState || null
+            setSelectedCountry(matchedCountry)
+          }
+        } else if (stateVal) {
+          setState(stateVal)
+        }
+      }
+    )
+  }
 
   const handleContinue = () => {
     setTouched({ investorType: true, address: true, city: true, state: true, dateOfBirth: true })
@@ -217,19 +343,42 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
         )}
       </div>
 
-      {/* Street Address */}
-      <div className="relative">
-        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      {/* Street Address — with Google Places autocomplete */}
+      <div className="relative" ref={addressDropdownRef}>
+        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
         <input
           type="text"
           placeholder="Street Address"
           value={address}
+          autoComplete="off"
           onBlur={() => setTouched((t) => ({ ...t, address: true }))}
-          onChange={(e) => setAddress(e.target.value)}
+          onChange={(e) => {
+            setAddress(e.target.value)
+            if (!e.target.value) setPredictionsOpen(false)
+          }}
           className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
             touched.address && !address.trim() ? "border-red-500" : "border-gray-600"
           }`}
         />
+        {predictionsOpen && predictions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
+            {predictions.map((p) => (
+              <button
+                key={p.place_id}
+                type="button"
+                // prevent input blur before click registers
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSelectPrediction(p)}
+                className="w-full px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
+              >
+                <p className="text-gray-200 text-sm">{p.structured_formatting.main_text}</p>
+                <p className="text-gray-500 text-xs mt-0.5">
+                  {p.structured_formatting.secondary_text}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
         {touched.address && !address.trim() && (
           <p className="text-red-400 text-xs mt-1 ml-1">Address is required</p>
         )}
