@@ -6,7 +6,7 @@
 /* Force dark mode for investment flow app */
 :root {
     --background: transparent;
-  --foreground: oklch(0.985 0 0);
+  --foreground: #F8F8F8;
   --card: oklch(0.08 0.02 270);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.08 0.02 270);

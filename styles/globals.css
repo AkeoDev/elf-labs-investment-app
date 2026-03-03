@@ -3,10 +3,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+
+
+
 :root {
     --background: transparent;
 
-  --foreground: oklch(0.145 0 0);
+  --foreground: #F8F8F8;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
