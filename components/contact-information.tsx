@@ -297,71 +297,62 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
           )}
         </div>
 
-        {/* State / Province */}
+        {/* State / Province — dropdown list when states exist, plain text input otherwise */}
         <div className="relative" ref={stateDropdownRef}>
-          <button
-            type="button"
-            onClick={() => setStateOpen(!stateOpen)}
-            className={`w-full bg-transparent border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
-              touched.state && !state ? "border-red-500" : "border-gray-600 hover:border-gray-400"
-            }`}
-          >
-            <div className="flex flex-col min-w-0">
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">
-                State / Province
-              </span>
-              <span className={`text-sm truncate ${state ? "text-gray-300" : "text-gray-500"}`}>
-                {state || (hasStates ? "Select state" : "Enter state")}
-              </span>
-            </div>
-            <ChevronDown
-              className={`w-4 h-4 text-gray-400 shrink-0 ml-2 transition-transform ${stateOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {stateOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
-              {hasStates ? (
-                <div className="max-h-56 overflow-y-auto custom-scrollbar">
-                  {countryStates.map((s) => (
-                    <button
-                      key={s.code}
-                      type="button"
-                      onClick={() => { setState(s.name); setStateOpen(false) }}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
-                        state === s.name ? "bg-white/10 text-white" : "text-gray-300 hover:bg-white/5"
-                      }`}
-                    >
-                      <span>{s.name}</span>
-                      <span className="text-gray-500 text-xs">{s.code}</span>
-                    </button>
-                  ))}
+          {hasStates ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setStateOpen(!stateOpen)}
+                className={`w-full bg-transparent border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
+                  touched.state && !state ? "border-red-500" : "border-gray-600 hover:border-gray-400"
+                }`}
+              >
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">
+                    State / Province
+                  </span>
+                  <span className={`text-sm truncate ${state ? "text-gray-300" : "text-gray-500"}`}>
+                    {state || "Select state"}
+                  </span>
                 </div>
-              ) : (
-                <div className="p-2">
-                  <input
-                    type="text"
-                    placeholder="Type state / province..."
-                    value={state}
-                    autoComplete="address-level1"
-                    autoFocus
-                    onChange={(e) => setState(e.target.value)}
-                    onBlur={() => setTouched((t) => ({ ...t, state: true }))}
-                    onKeyDown={(e) => { if (e.key === "Enter" && state.trim()) setStateOpen(false) }}
-                    className="w-full bg-[#0f1629] border border-gray-600 rounded px-3 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400"
-                  />
-                  {state.trim() && (
-                    <button
-                      type="button"
-                      onClick={() => setStateOpen(false)}
-                      className="w-full mt-1 py-2 text-sm text-center text-[#e91e8c] hover:text-[#d11a7d] transition-colors"
-                    >
-                      Confirm
-                    </button>
-                  )}
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-400 shrink-0 ml-2 transition-transform ${stateOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {stateOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
+                  <div className="max-h-52 overflow-y-auto custom-scrollbar">
+                    {countryStates.map((s) => (
+                      <button
+                        key={s.code}
+                        type="button"
+                        onClick={() => { setState(s.name); setStateOpen(false) }}
+                        className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
+                          state === s.name ? "bg-white/10 text-white" : "text-gray-300 hover:bg-white/5"
+                        }`}
+                      >
+                        <span>{s.name}</span>
+                        <span className="text-gray-500 text-xs">{s.code}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
+            </>
+          ) : (
+            <input
+              type="text"
+              placeholder="State / Province"
+              value={state}
+              autoComplete="address-level1"
+              onBlur={() => setTouched((t) => ({ ...t, state: true }))}
+              onChange={(e) => setState(e.target.value)}
+              className={`w-full bg-transparent border rounded-lg py-4 px-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
+                touched.state && !state.trim() ? "border-red-500" : "border-gray-600"
+              }`}
+            />
           )}
 
           {touched.state && !state.trim() && (
