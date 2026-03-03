@@ -69,6 +69,21 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  // Typeahead: pressing a letter jumps to the first country starting with it
+  useEffect(() => {
+    if (!showCountryDropdown) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!/^[a-zA-Z]$/.test(e.key)) return
+      const letter = e.key.toLowerCase()
+      const idx = phoneList.findIndex((c) => c.name.toLowerCase().startsWith(letter))
+      if (idx === -1) return
+      const buttons = listRef.current?.querySelectorAll("button")
+      buttons?.[idx]?.scrollIntoView({ block: "nearest" })
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [showCountryDropdown, phoneList])
+
   const isValidEmail = formData.email.includes("@") && formData.email.includes(".")
   const isFormComplete =
     formData.email.trim() !== "" &&
