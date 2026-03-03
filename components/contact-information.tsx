@@ -225,6 +225,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
           type="text"
           placeholder="Street Address"
           value={address}
+          autoComplete="address-line1"
           onBlur={() => setTouched((t) => ({ ...t, address: true }))}
           onChange={(e) => setAddress(e.target.value)}
           className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
@@ -243,6 +244,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
           type="text"
           placeholder="City"
           value={city}
+          autoComplete="address-level2"
           onBlur={() => setTouched((t) => ({ ...t, city: true }))}
           onChange={(e) => setCity(e.target.value)}
           className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
@@ -378,6 +380,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
                     type="text"
                     placeholder="Type state / province..."
                     value={state}
+                    autoComplete="address-level1"
                     onChange={(e) => setState(e.target.value)}
                     onBlur={() => setTouched((t) => ({ ...t, state: true }))}
                     onKeyDown={(e) => { if (e.key === "Enter" && state.trim()) setStateOpen(false) }}
@@ -418,6 +421,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
             type="date"
             value={dateOfBirth}
             max={maxDob}
+            autoComplete="bday"
             onBlur={() => setTouched((t) => ({ ...t, dateOfBirth: true }))}
             onChange={(e) => setDateOfBirth(e.target.value)}
             className="bg-transparent text-gray-300 focus:outline-none [color-scheme:dark] text-sm w-full"
