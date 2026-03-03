@@ -5,6 +5,7 @@ import { InitialForm } from "@/components/initial-form"
 import { InvestmentFlow } from "@/components/investment-flow"
 import { InvestorPerks } from "@/components/investor-perks"
 import { AdditionalInfo } from "@/components/additional-info"
+import { Youtube, Twitter, Linkedin, Instagram, Facebook } from "lucide-react"
 
 export default function InvestmentPage() {
   const [step, setStep] = useState<"initial" | "flow">("initial") // Default to initial for demo
@@ -22,8 +23,8 @@ export default function InvestmentPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0b14] flex flex-col">
-      <div className="flex-1 px-4 md:px-8 py-8">
+    <main className="min-h-screen flex flex-col">
+      <div className="md:px-8 py-8">
 
         {step === "initial" ? (
           <InitialForm onSubmit={handleInitialSubmit} />
@@ -45,6 +46,7 @@ export default function InvestmentPage() {
                   <p className="text-white font-semibold">Common Stock</p>
                 </div>
               </div>
+
 
               <div className="grid md:grid-cols-[1fr,400px] gap-6">
                 {/* Left: Investment Flow */}
