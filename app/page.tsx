@@ -24,7 +24,7 @@ export default function InvestmentPage() {
 
   return (
     <main className="min-h-screen flex flex-col">
-      <div className="md:px-8 py-8">
+      <div className="md:px-8">
 
         {step === "initial" ? (
           <InitialForm onSubmit={handleInitialSubmit} />
