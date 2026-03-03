@@ -112,7 +112,7 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
   }
 
   return (
-    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 md:p-6">
+    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-6 md:p-6">
       <div className="flex items-center gap-2 mb-4">
         <span className="w-3 h-3 rounded-sm bg-[#e91e8c]" />
         <h2 className="text-white font-medium">Begin your Investment</h2>

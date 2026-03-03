@@ -270,7 +270,7 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
   }
 
   return (
-    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 sm:p-8 max-w-xl mx-auto">
+    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-6 sm:p-8 max-w-xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">
           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
