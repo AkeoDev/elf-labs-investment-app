@@ -278,7 +278,7 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
         </button>
       </form>
 
-      <p className="text-gray-500 text-sm text-center mt-6 leading-relaxed">
+      <p className="text-[#F8F8F8]/80 text-sm text-center mt-6 leading-relaxed">
         By beginning the investment process, you consent to receive communications via email or SMS regarding updates to
         this offer, and may unsubscribe from non-transactional emails at any time.
       </p>
