@@ -100,6 +100,8 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
 
   return (
     <div className="space-y-4">
+      <h3 className="text-white text-xl font-semibold text-center">How much would you like to invest?</h3>
+
       {loading ? (
         <div className="flex justify-center py-2">
           <div className="w-5 h-5 border-2 border-gray-500 border-t-white rounded-full animate-spin" />
@@ -124,7 +126,7 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
           <span className="text-gray-400 text-3xl font-light">+</span>
           <div className="text-center">
             <p className="text-[#e91e8c] text-4xl font-bold">{bonusShares.toLocaleString()}</p>
-            <p className="text-[#e91e8c]/70 text-base">Bonus Shares</p>
+            <p className="text-[#e91e8c]/70 text-base">Free Bonus Shares</p>
           </div>
         </div>
       </div>
@@ -139,19 +141,15 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
             <button
               key={index}
               onClick={() => handleTierSelect(index)}
-              className={`w-full py-4 px-4 rounded-lg flex items-center justify-between transition-all ${
-                isSelected ? "bg-[#1a2744]" : "bg-[#0f1629]"
-              }`}
+              className="w-full py-4 px-4 rounded-lg flex items-center justify-between transition-all bg-transparent"
             >
               <div className="flex items-center gap-3">
                 {/* Radio circle */}
                 <div
-                  className={`w-6 h-6 flex-shrink-0 rounded-full border-2 flex items-center justify-center ${
-                    isSelected ? "border-[#e91e8c]" : "border-gray-500"
+                  className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center ${
+                    isSelected ? "bg-[#e91e8c]" : "border-2 border-gray-500"
                   }`}
-                >
-                  {isSelected && <div className="w-3 h-3 rounded-full bg-[#e91e8c]" />}
-                </div>
+                />
 
                 {/* Amount and shares */}
                 <div className="text-left">
@@ -165,12 +163,12 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
               {/* Badges */}
               {tier.bonusPercent > 0 && (
                 <div className="flex items-center gap-1 sm:gap-2">
-                  <div className="bg-[#c9a227] text-[#1a1f35] rounded-full px-2 sm:px-3 py-0.5 sm:py-1.5 text-center">
+                  <div className="bg-[#e91e8c]/20 text-[#e91e8c] rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-center">
                     <span className="font-bold text-[10px] sm:text-sm block leading-snug">+{tierBonusShares.toLocaleString()}</span>
-                    <span className="text-[8px] sm:text-xs font-medium block leading-snug">Bonus Shares</span>
+                    <span className="text-[8px] sm:text-xs font-medium block leading-snug">Free Shares</span>
                   </div>
-                  <div className="bg-[#c9a227] text-[#1a1f35] rounded-full px-2 sm:px-3 py-0.5 sm:py-1.5 text-center">
-                    <span className="font-bold text-[10px] sm:text-sm block leading-snug">{tier.bonusPercent}%</span>
+                  <div className="bg-[#e91e8c]/20 text-[#e91e8c] rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-center">
+                    <span className="font-bold text-[10px] sm:text-sm block leading-snug">{tier.bonusPercent.toFixed(2)}%</span>
                     <span className="text-[8px] sm:text-xs font-medium block leading-snug">Bonus</span>
                   </div>
                 </div>
@@ -206,12 +204,6 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
             Minimum investment is ${minInvestment.toFixed(2)}
           </p>
         )}
-      </div>
-
-      {/* Total shares row */}
-      <div className="flex justify-between items-center py-3 border-t border-gray-700 mt-4">
-        <span className="text-gray-300 text-lg">Total Shares</span>
-        <span className="text-white font-bold text-2xl">{(baseShares + bonusShares).toLocaleString()}</span>
       </div>
 
       {/* Continue button */}

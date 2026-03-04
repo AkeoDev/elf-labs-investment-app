@@ -78,7 +78,7 @@ export function DateField({
         }}
         maxLength={10}
         className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
-          hasError || isIncomplete ? "border-red-500" : "border-gray-600"
+          hasError || isIncomplete ? "border-red-500" : "border-[#F6248833]"
         }`}
       />
       {hasError && (

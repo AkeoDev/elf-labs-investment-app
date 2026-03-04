@@ -138,7 +138,7 @@ export function AddressSection({
           <button
             type="button"
             onClick={() => setCountryOpen(!countryOpen)}
-            className="w-full bg-transparent border border-gray-600 hover:border-gray-400 rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none"
+            className="w-full bg-transparent border border-[#F6248833] hover:border-[#F6248866] rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none"
           >
             <div className="flex flex-col min-w-0">
               <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">
@@ -154,7 +154,7 @@ export function AddressSection({
           </button>
 
           {countryOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[#0D1425] border border-[#F6248833] rounded-lg shadow-xl overflow-hidden z-30">
               <div ref={countryListRef} className="max-h-52 overflow-y-auto custom-scrollbar">
                 {displayCountries.map((c) => (
                   <button
@@ -184,7 +184,7 @@ export function AddressSection({
                 type="button"
                 onClick={() => setStateOpen(!stateOpen)}
                 className={`w-full bg-transparent border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
-                  touched.state && !fields.state ? "border-red-500" : "border-gray-600 hover:border-gray-400"
+                  touched.state && !fields.state ? "border-red-500" : "border-[#F6248833] hover:border-[#F6248866]"
                 }`}
               >
                 <div className="flex flex-col min-w-0">
@@ -201,7 +201,7 @@ export function AddressSection({
               </button>
 
               {stateOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0D1425] border border-[#F6248833] rounded-lg shadow-xl overflow-hidden z-30">
                   <div className="max-h-52 overflow-y-auto custom-scrollbar">
                     {countryStates.map((s) => (
                       <button
@@ -232,7 +232,7 @@ export function AddressSection({
               onBlur={() => onBlur("state")}
               onChange={(e) => updateField("state", e.target.value)}
               className={`w-full bg-transparent border rounded-lg py-4 px-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
-                touched.state && !fields.state.trim() ? "border-red-500" : "border-gray-600"
+                touched.state && !fields.state.trim() ? "border-red-500" : "border-[#F6248833]"
               }`}
             />
           )}

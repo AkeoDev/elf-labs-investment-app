@@ -327,10 +327,10 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
         <div className="relative">
           <button
             onClick={() => setInvestorTypeOpen(!investorTypeOpen)}
-            className={`w-full bg-[#1a1f35] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors ${
+            className={`w-full bg-[#0D1425] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors ${
               investorTypeTouched && !investorType
                 ? "border-red-500"
-                : "border-gray-600 hover:border-gray-400"
+                : "border-[#F6248833] hover:border-[#F6248866]"
             }`}
           >
             <span className={typeLabel ? "text-white" : "text-gray-500"}>
@@ -341,7 +341,7 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
             />
           </button>
           {investorTypeOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1f35] border border-gray-600 rounded-lg overflow-hidden z-20">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[#0D1425] border border-[#F6248833] rounded-lg overflow-hidden z-20">
               {INVESTOR_TYPES.map((type) => (
                 <button
                   key={type.value}
@@ -349,10 +349,10 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
                     setInvestorType(type.value)
                     setInvestorTypeOpen(false)
                   }}
-                  className={`w-full py-3 px-4 text-left transition-colors ${
+                  className={`w-full py-4 px-5 text-left transition-colors ${
                     investorType === type.value
                       ? "bg-white/10 text-white"
-                      : "text-gray-300 hover:bg-[#252a42]"
+                      : "text-gray-300 hover:bg-white/5"
                   }`}
                 >
                   {type.label}

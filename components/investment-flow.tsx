@@ -555,6 +555,7 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
           {/* Investment details */}
           {investmentData && (
             <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Account Details</h4>
               <div className="flex items-center gap-3">
                 <DollarSign className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex-1">
@@ -590,14 +591,23 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
             </div>
           )}
 
+          <div className="bg-[#1a2744]/60 rounded-lg p-4">
+            <p className="text-gray-300 text-sm leading-relaxed">
+              By clicking the button below, your investment details will be submitted to our
+              processing partner. You will then receive instructions via email to complete
+              document signing and payment.
+            </p>
+          </div>
+
           <button
             onClick={() => {
               setCompletedSections([...completedSections, 3])
               setActiveSection(4)
             }}
-            className="w-full mt-2 bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors"
+            className="w-full mt-2 bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors flex items-center justify-center gap-2"
           >
-            Confirm and Continue
+            Complete Payment
+            <span className="text-lg">→</span>
           </button>
         </div>
       </AccordionSection>

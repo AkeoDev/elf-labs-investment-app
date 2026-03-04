@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { Mail, User, Phone, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { STATIC_PHONE_LIST, buildPhoneList, type CountryWithPhone } from "@/lib/countries"
 
 interface InitialFormProps {
@@ -13,6 +13,11 @@ interface InitialFormProps {
     phone: string
     countryCode: string
   }) => void
+}
+
+/** Convert ISO 3166-1 alpha-2 code to flag emoji (e.g. "US" → "🇺🇸") */
+function isoToFlag(iso: string): string {
+  return [...iso.toUpperCase()].map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join("")
 }
 
 export function InitialForm({ onSubmit }: InitialFormProps) {
@@ -26,7 +31,6 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
     phone: "",
   })
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
-  const [countrySearch, setCountrySearch] = useState("")
   const listRef = useRef<HTMLDivElement>(null)
   const [touched, setTouched] = useState({
     email: false,
@@ -35,7 +39,6 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
     phone: false,
   })
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch live countries from DealMaker and build phone list
   useEffect(() => {
@@ -106,18 +109,16 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
   }
 
   return (
-    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-6 sm:p-8 max-w-xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 sm:p-6 max-w-xl mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-10">
       <div className="relative">
-  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white" />
-  
   <input
     type="email"
     placeholder="Email"
     value={formData.email}
     onBlur={() => setTouched({ ...touched, email: true })}
     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-    className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4
+    className={`w-full bg-transparent border rounded-lg py-4 px-4
     text-white placeholder-white
     focus:outline-none focus:border-white
     ${
@@ -140,15 +141,13 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
 
         {/* First Name */}
         <div className="relative">
-  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white" />
-  
   <input
     type="text"
     placeholder="First Name"
     value={formData.firstName}
     onBlur={() => setTouched({ ...touched, firstName: true })}
     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-    className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4
+    className={`w-full bg-transparent border rounded-lg py-4 px-4
     text-white placeholder-white
     focus:outline-none focus:border-white
     ${
@@ -166,14 +165,13 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
 </div>
 
       <div className="relative">
-  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white" />
   <input
     type="text"
     placeholder="Last Name"
     value={formData.lastName}
     onBlur={() => setTouched({ ...touched, lastName: true })}
     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-    className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4
+    className={`w-full bg-transparent border rounded-lg py-4 px-4
     text-white placeholder-white
     focus:outline-none focus:border-white
     ${
@@ -189,21 +187,20 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
 
         <div className="relative" ref={dropdownRef}>
           <div className={`flex border rounded-lg overflow-hidden ${
-            touched.phone && formData.phone.trim().length < 7 ? "border-red-500" : "border-gray-600"
+            touched.phone && formData.phone.trim().length < 7 ? "border-red-500" : "border-[#F6248833]"
           }`}>
             {/* Country code dropdown */}
             <button
               type="button"
               onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-              className="flex items-center gap-1.5 px-3 py-4 border-r border-gray-600 hover:bg-white/5 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-4 border-r border-[#F6248833] hover:bg-white/5 transition-colors"
             >
-              <span className="text-gray-300 text-sm font-medium">{selectedCountry.name}</span>
-              <span className="text-gray-300 text-sm">{selectedCountry.phoneCode}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-lg leading-none">{isoToFlag(selectedCountry.isoCode)}</span>
+              <span className="text-white text-sm">{selectedCountry.phoneCode}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
             </button>
 
     <div className="relative flex-1">
-      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white" />
       <input
         type="tel"
         placeholder="Phone number"
@@ -213,37 +210,21 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
           const value = e.target.value.replace(/[^0-9]/g, "")
           setFormData({ ...formData, phone: value })
         }}
-        className="w-full bg-transparent py-4 pl-10 pr-4 text-white placeholder-white focus:outline-none"
+        className="w-full bg-transparent py-4 px-4 text-white placeholder-white focus:outline-none"
       />
     </div>
   </div>
 
   {showCountryDropdown && (
     <div className="absolute z-50 mt-1 w-full bg-[#1a2744] border border-[#F6248833] rounded-lg shadow-lg overflow-hidden">
-      <div className="p-2 border-b border-[#F6248833]">
-        <input
-          ref={searchInputRef}
-          type="text"
-          placeholder="Search country..."
-          value={countrySearch}
-          onChange={(e) => setCountrySearch(e.target.value)}
-          className="w-full bg-[#0f1629] border border-[#F6248833] rounded px-3 py-2 text-sm text-white placeholder-white focus:outline-none focus:border-white"
-          autoFocus
-        />
-      </div>
       <div ref={listRef} className="max-h-52 overflow-y-auto custom-scrollbar">
-        {phoneList.filter((cc) =>
-          cc.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-          cc.phoneCode.includes(countrySearch) ||
-          cc.isoCode.toLowerCase().includes(countrySearch.toLowerCase())
-        ).map((cc) => (
+        {phoneList.map((cc) => (
           <button
             key={`${cc.isoCode}-${cc.phoneCode}`}
             type="button"
             onClick={() => {
               setSelectedCountry(cc)
               setShowCountryDropdown(false)
-              setCountrySearch("")
             }}
             className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/10 transition-colors ${
               cc.isoCode === selectedCountry.isoCode
@@ -251,7 +232,10 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
                 : "text-gray-300"
             }`}
           >
-            <span className="text-sm font-medium">{cc.name}</span>
+            <span className="flex items-center gap-2">
+              <span className="text-base leading-none">{isoToFlag(cc.isoCode)}</span>
+              <span className="text-sm font-medium">{cc.name}</span>
+            </span>
             <span className="text-sm text-gray-400">{cc.phoneCode}</span>
           </button>
         ))}
