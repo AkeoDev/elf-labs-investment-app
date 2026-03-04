@@ -104,50 +104,65 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
   }
 
   return (
-    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 sm:p-8 max-w-xl mx-auto">
+    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-6 sm:p-8 max-w-xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email */}
-        <div className="relative">
-          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onBlur={() => setTouched({ ...touched, email: true })}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 ${
-              touched.email && (!formData.email.trim() || !isValidEmail)
-                ? "border-red-500"
-                : "border-gray-600"
-            }`}
-          />
-          {touched.email && !formData.email.trim() && (
-            <p className="text-red-400 text-xs mt-1 ml-1">Email is required</p>
-          )}
-          {touched.email && formData.email.trim() && !isValidEmail && (
-            <p className="text-red-400 text-xs mt-1 ml-1">Please enter a valid email</p>
-          )}
-        </div>
+      <div className="relative">
+  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white" />
+  
+  <input
+    type="email"
+    placeholder="Email"
+    value={formData.email}
+    onBlur={() => setTouched({ ...touched, email: true })}
+    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+    className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4
+    text-white placeholder-white
+    focus:outline-none focus:border-white
+    ${
+      touched.email && (!formData.email.trim() || !isValidEmail)
+        ? "border-red-500"
+        : "border-[#F6248833]"
+    }`}
+  />
+
+  {touched.email && !formData.email.trim() && (
+    <p className="text-red-400 text-xs mt-1 ml-1">Email is required</p>
+  )}
+
+  {touched.email && formData.email.trim() && !isValidEmail && (
+    <p className="text-red-400 text-xs mt-1 ml-1">
+      Please enter a valid email
+    </p>
+  )}
+</div>
 
         {/* First Name */}
         <div className="relative">
-          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="First Name"
-            value={formData.firstName}
-            onBlur={() => setTouched({ ...touched, firstName: true })}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-            className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 ${
-              touched.firstName && !formData.firstName.trim() ? "border-red-500" : "border-gray-600"
-            }`}
-          />
-          {touched.firstName && !formData.firstName.trim() && (
-            <p className="text-red-400 text-xs mt-1 ml-1">First name is required</p>
-          )}
-        </div>
+  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white" />
+  
+  <input
+    type="text"
+    placeholder="First Name"
+    value={formData.firstName}
+    onBlur={() => setTouched({ ...touched, firstName: true })}
+    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+    className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4
+    text-white placeholder-white
+    focus:outline-none focus:border-white
+    ${
+      touched.firstName && !formData.firstName.trim()
+        ? "border-red-500"
+        : "border-[#F6248833]"
+    }`}
+  />
 
-        {/* Last Name */}
+  {touched.firstName && !formData.firstName.trim() && (
+    <p className="text-red-400 text-xs mt-1 ml-1">
+      First name is required
+    </p>
+  )}
+</div>
+
         <div className="relative">
           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -165,66 +180,78 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
           )}
         </div>
 
-        {/* Phone + Country Code */}
         <div className="relative" ref={dropdownRef}>
-          <div
-            className={`flex border rounded-lg overflow-hidden ${
-              touched.phone && formData.phone.trim().length < 7
-                ? "border-red-500"
-                : "border-gray-600"
-            }`}
-          >
-            {/* Country code selector */}
+          <div className={`flex border rounded-lg overflow-hidden ${
+            touched.phone && formData.phone.trim().length < 7 ? "border-red-500" : "border-gray-600"
+          }`}>
+            {/* Country code dropdown */}
             <button
               type="button"
               onClick={() => setShowCountryDropdown(!showCountryDropdown)}
               className="flex items-center gap-1.5 px-3 py-4 border-r border-gray-600 hover:bg-white/5 transition-colors"
             >
-              <span className="text-gray-300 text-sm font-medium">{selectedCountry.name}</span>
-              <span className="text-gray-300 text-sm">{selectedCountry.phoneCode}</span>
+              <span className="text-gray-300 text-sm font-medium">{countryCode.name}</span>
+              <span className="text-gray-300 text-sm">{countryCode.code}</span>
               <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
             </button>
 
-            <div className="relative flex-1">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="tel"
-                placeholder="Phone number"
-                value={formData.phone}
-                onBlur={() => setTouched({ ...touched, phone: true })}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, "")
-                  setFormData({ ...formData, phone: value })
-                }}
-                className="w-full bg-transparent py-4 pl-10 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none"
-              />
-            </div>
-          </div>
+    <div className="relative flex-1">
+      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white" />
+      <input
+        type="tel"
+        placeholder="Phone number"
+        value={formData.phone}
+        onBlur={() => setTouched({ ...touched, phone: true })}
+        onChange={(e) => {
+          const value = e.target.value.replace(/[^0-9]/g, "")
+          setFormData({ ...formData, phone: value })
+        }}
+        className="w-full bg-transparent py-4 pl-10 pr-4 text-white placeholder-white focus:outline-none"
+      />
+    </div>
+  </div>
 
-          {/* Country dropdown menu */}
+          {/* Country code dropdown menu */}
           {showCountryDropdown && (
             <div className="absolute z-50 mt-1 w-full bg-[#1a2744] border border-gray-600 rounded-lg shadow-lg overflow-hidden">
+              <div className="p-2 border-b border-gray-600">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search country..."
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                  className="w-full bg-[#0f1629] border border-gray-600 rounded px-3 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400"
+                  autoFocus
+                />
+              </div>
               <div ref={listRef} className="max-h-52 overflow-y-auto custom-scrollbar">
-                {phoneList.map((c) => (
+                {COUNTRY_CODES.filter((cc) =>
+                  cc.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                  cc.code.includes(countrySearch) ||
+                  cc.country.toLowerCase().includes(countrySearch.toLowerCase())
+                ).map((cc) => (
                   <button
-                    key={`${c.isoCode}-${c.phoneCode}`}
+                    key={`${cc.country}-${cc.code}`}
                     type="button"
                     onClick={() => {
-                      setSelectedCountry(c)
+                      setCountryCode(cc)
                       setShowCountryDropdown(false)
+                      setCountrySearch("")
                     }}
                     className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/10 transition-colors ${
-                      c.isoCode === selectedCountry.isoCode ? "bg-white/5 text-white" : "text-gray-300"
+                      cc.country === countryCode.country && cc.code === countryCode.code
+                        ? "bg-white/5 text-white"
+                        : "text-gray-300"
                     }`}
                   >
-                    <span className="text-sm font-medium">{c.name}</span>
-                    <span className="text-sm text-gray-400">{c.phoneCode}</span>
+                    <span className="text-sm font-medium">{cc.name}</span>
+                    <span className="text-sm text-gray-400">{cc.code}</span>
                   </button>
                 ))}
               </div>
             </div>
           )}
-
           {touched.phone && formData.phone.trim().length < 7 && (
             <p className="text-red-400 text-xs mt-1 ml-1">Please enter a valid phone number</p>
           )}
@@ -245,9 +272,8 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
       </form>
 
       <p className="text-gray-500 text-sm text-center mt-6 leading-relaxed">
-        By beginning the investment process, you consent to receive communications via email or SMS
-        regarding updates to this offer, and may unsubscribe from non-transactional emails at any
-        time.
+        By beginning the investment process, you consent to receive communications via email or SMS regarding updates to
+        this offer, and may unsubscribe from non-transactional emails at any time.
       </p>
     </div>
   )
