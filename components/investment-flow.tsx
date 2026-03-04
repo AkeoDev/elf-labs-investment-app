@@ -126,7 +126,7 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
 
       if (res.ok && data.success) {
         setSubmitSuccess(true)
-        setCompletedSections([...completedSections, 4])
+        setCompletedSections([...completedSections, 3])
         if (data.investor?.accessLink) {
           setAccessLink(data.investor.accessLink)
         }
@@ -508,6 +508,7 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
         isActive={activeSection === 3}
         isCompleted={completedSections.includes(3)}
         onToggle={() => setActiveSection(activeSection === 3 ? 0 : 3)}
+        isLast
       >
         <div className="py-4 space-y-4">
           <p className="text-gray-400 text-sm">Please review your details before proceeding.</p>
@@ -591,37 +592,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
             </div>
           )}
 
-          <div className="bg-[#1a2744]/60 rounded-lg p-4">
-            <p className="text-gray-300 text-sm leading-relaxed">
-              By clicking the button below, your investment details will be submitted to our
-              processing partner. You will then receive instructions via email to complete
-              document signing and payment.
-            </p>
-          </div>
-
-          <button
-            onClick={() => {
-              setCompletedSections([...completedSections, 3])
-              setActiveSection(4)
-            }}
-            className="w-full mt-2 bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors flex items-center justify-center gap-2"
-          >
-            Complete Payment
-            <span className="text-lg">→</span>
-          </button>
-        </div>
-      </AccordionSection>
-
-      {/* Section 4: Payment */}
-      <AccordionSection
-        number={4}
-        title="Payment"
-        isActive={activeSection === 4}
-        isCompleted={completedSections.includes(4)}
-        onToggle={() => setActiveSection(activeSection === 4 ? 0 : 4)}
-        isLast
-      >
-        <div className="py-4 space-y-4">
           {submitSuccess ? (
             /* Success state */
             <div className="space-y-4">
@@ -694,18 +664,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
                 </p>
               </div>
 
-              {investmentData && (
-                <div className="flex justify-between items-center bg-[#1a2744]/40 rounded-lg px-4 py-3">
-                  <span className="text-gray-400 text-sm">Total Investment</span>
-                  <span className="text-white font-semibold">
-                    $
-                    {investmentData.amount.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-              )}
-
               {submitError && (
                 <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
                   <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
@@ -716,9 +674,14 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
               <button
                 onClick={handleSubmitInvestment}
                 disabled={isSubmitting}
-                className="w-full bg-[#e91e8c] hover:bg-[#d11a7d] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-4 rounded-full transition-colors"
+                className="w-full mt-2 bg-[#e91e8c] hover:bg-[#d11a7d] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-4 rounded-full transition-colors flex items-center justify-center gap-2"
               >
-                {isSubmitting ? "Submitting Investment..." : "Complete Payment"}
+                {isSubmitting ? "Submitting Investment..." : (
+                  <>
+                    Complete Payment
+                    <span className="text-lg">→</span>
+                  </>
+                )}
               </button>
             </>
           )}
