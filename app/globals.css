@@ -125,6 +125,19 @@
   }
 }
 
+/* Prevent browser autofill from overriding dark background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 5000s ease-in-out 0s;
+  background-color: transparent !important;
+}
+
 /* Custom scrollbar for dark theme */
 .custom-scrollbar {
   scrollbar-color: rgba(233, 30, 140, 0.3) transparent;
