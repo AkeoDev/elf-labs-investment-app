@@ -2,21 +2,32 @@ import { type NextRequest, NextResponse } from "next/server"
 import {
   createInvestor,
   createIndividualProfile,
+  createJointProfile,
+  createCorporationProfile,
+  createTrustProfile,
   calculateInvestment,
   validateInvestment,
   getInvestorAccessLink,
 } from "@/lib/dealmaker"
+import { dateToISO } from "@/lib/investor-types"
+import type {
+  PersonFields,
+  AddressFields,
+  CorporationFields,
+  TrustFields,
+  IRAFields,
+} from "@/lib/investor-types"
 
 /**
  * POST /api/dealmaker/investors
- * 
+ *
  * Create a new investor in DealMaker from your custom checkout flow.
- * This connects your UI to DealMaker's investment processing.
+ * Supports all 5 investor types with type-specific profile creation.
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
+
     const {
       email,
       firstName,
@@ -29,6 +40,8 @@ export async function POST(request: NextRequest) {
       city,
       state,
       dateOfBirth,
+      entityName,
+      formData,
     } = body
 
     // Validate required fields
@@ -45,10 +58,9 @@ export async function POST(request: NextRequest) {
     if (formattedPhone && !formattedPhone.startsWith("+")) {
       formattedPhone = `+${formattedPhone}`
     }
-    // Ensure only the first + is kept
     formattedPhone = formattedPhone.replace(/(?!^)\+/g, "")
     console.log("[v0] Formatted phone:", JSON.stringify(formattedPhone))
-    
+
     // Validate investment amount
     const validation = validateInvestment(investmentAmount)
     if (!validation.valid) {
@@ -57,10 +69,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
     // Calculate shares
     const calculation = calculateInvestment(investmentAmount)
-    
+
     // Map UI investor type to DealMaker profile type
     const profileTypeMap: Record<string, "individual" | "joint" | "corporation" | "trust"> = {
       "Individual": "individual",
@@ -68,29 +80,40 @@ export async function POST(request: NextRequest) {
       "Trust": "trust",
       "Entity (LLC, Corporation, etc.)": "corporation",
       "IRA / Self-Directed IRA": "individual",
+      // Also support the key-based values from the new form
+      "individual": "individual",
+      "joint": "joint",
+      "trust": "trust",
+      "corporation": "corporation",
+      "ira": "individual",
     }
     const profileType = profileTypeMap[investorType] || "individual"
 
-    // Create investor profile first (optional - if this fails we still proceed)
+    // ─── Create investor profile (type-specific) ──────────────────────
+
     let profileId: number | undefined
     try {
-      const profile = await createIndividualProfile({
+      profileId = await createProfileByType({
+        profileType,
+        investorType,
         email,
-        first_name: firstName,
-        last_name: lastName,
-        phone_number: formattedPhone,
-        date_of_birth: dateOfBirth,
+        firstName,
+        lastName,
+        phone: formattedPhone,
+        countryCode,
         address,
         city,
         state,
-        country: countryCode,
+        dateOfBirth,
+        formData,
       })
-      profileId = profile.id
     } catch (profileError) {
       // Profile creation is non-critical, continue without it
+      console.warn("[DealMaker] Profile creation failed:", profileError)
     }
 
-    // Create the investor in DealMaker
+    // ─── Create the investor in DealMaker ─────────────────────────────
+
     const investorPayload: Record<string, unknown> = {
       email,
       first_name: firstName,
@@ -114,7 +137,7 @@ export async function POST(request: NextRequest) {
     if (address) investorPayload.address = address
     if (city) investorPayload.city = city
     if (state) investorPayload.state = state
-    
+
     console.log("[DealMaker] Creating investor with payload:", JSON.stringify(investorPayload, null, 2))
     const investor = await createInvestor(
       investorPayload as Parameters<typeof createInvestor>[0]
@@ -129,7 +152,7 @@ export async function POST(request: NextRequest) {
     } catch (linkError) {
       // Access link retrieval is non-critical
     }
-    
+
     return NextResponse.json({
       success: true,
       investor: {
@@ -151,14 +174,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[DealMaker API] Error creating investor:", error)
 
-    // Extract the actual error message from DealMaker if available
     const message = error instanceof Error ? error.message : ""
     let userError = "Failed to create investor. Please try again."
 
     if (message.includes("Invalid phone number")) {
       userError = "Invalid phone number. Please use a full number with country code (e.g. +16135550119)."
     } else if (message.includes("400")) {
-      // Pass through other 400 validation errors from DealMaker
       const match = message.match(/"error":"([^"]+)"/)
       if (match) userError = match[1]
     }
@@ -167,5 +188,175 @@ export async function POST(request: NextRequest) {
       { error: userError },
       { status: 500 }
     )
+  }
+}
+
+// ─── Helper: format phone with prefix ───────────────────────────────────────
+
+function formatPhone(phone: string, phoneCountryCode: string): string {
+  if (!phone) return ""
+  // The phone field from the form is digits only; the phoneCountryCode
+  // is an ISO code like "US". We need the dial code. For now, just prefix
+  // with + if it looks like it already has the dial code baked in, or
+  // pass through as-is since the parent already formats it.
+  const cleaned = phone.replace(/[^0-9+]/g, "")
+  if (cleaned.startsWith("+")) return cleaned
+  return `+${cleaned}`
+}
+
+// ─── Helper: convert MM/DD/YYYY display date to ISO ─────────────────────────
+
+function toISO(displayDate: string): string {
+  if (!displayDate) return ""
+  // Already ISO?
+  if (/^\d{4}-\d{2}-\d{2}$/.test(displayDate)) return displayDate
+  // MM/DD/YYYY
+  if (displayDate.includes("/")) return dateToISO(displayDate)
+  return displayDate
+}
+
+// ─── Type-specific profile creation ─────────────────────────────────────────
+
+interface ProfileCreationArgs {
+  profileType: "individual" | "joint" | "corporation" | "trust"
+  investorType: string
+  email: string
+  firstName: string
+  lastName: string
+  phone: string
+  countryCode?: string
+  address?: string
+  city?: string
+  state?: string
+  dateOfBirth?: string
+  formData?: unknown
+}
+
+async function createProfileByType(args: ProfileCreationArgs): Promise<number | undefined> {
+  const { profileType, email, firstName, lastName, phone, countryCode, address, city, state, dateOfBirth, formData } = args
+
+  switch (profileType) {
+    case "individual": {
+      // For Individual and IRA, create an individual profile
+      // If formData is available, extract richer data
+      const fd = formData as { person?: PersonFields; holder?: PersonFields } | undefined
+      const person = fd?.person ?? fd?.holder // IRA uses "holder"
+
+      const profile = await createIndividualProfile({
+        email,
+        first_name: person?.firstName ?? firstName,
+        last_name: person?.lastName ?? lastName,
+        phone_number: phone,
+        date_of_birth: person ? toISO(person.dateOfBirth) : dateOfBirth,
+        address: person?.address ?? address,
+        city: person?.city ?? city,
+        state: person?.state ?? state,
+        country: person?.countryCode ?? countryCode,
+      })
+      return profile.id
+    }
+
+    case "joint": {
+      const fd = formData as { primary?: PersonFields; joint?: PersonFields } | undefined
+      if (!fd?.primary || !fd?.joint) {
+        // Fallback: create as individual if joint data missing
+        const profile = await createIndividualProfile({
+          email, first_name: firstName, last_name: lastName,
+          phone_number: phone, date_of_birth: dateOfBirth,
+          address, city, state, country: countryCode,
+        })
+        return profile.id
+      }
+
+      const result = await createJointProfile({
+        email,
+        joint_type: "joint_tenant",
+        // Primary holder
+        first_name: fd.primary.firstName,
+        last_name: fd.primary.lastName,
+        country: fd.primary.countryCode,
+        street_address: fd.primary.address,
+        unit2: fd.primary.unit || undefined,
+        city: fd.primary.city,
+        region: fd.primary.state,
+        postal_code: fd.primary.zip || "",
+        date_of_birth: toISO(fd.primary.dateOfBirth),
+        phone_number: phone,
+        // Joint holder
+        joint_holder_first_name: fd.joint.firstName,
+        joint_holder_last_name: fd.joint.lastName,
+        joint_holder_country: fd.joint.countryCode,
+        joint_holder_street_address: fd.joint.address,
+        joint_holder_unit2: fd.joint.unit || undefined,
+        joint_holder_city: fd.joint.city,
+        joint_holder_region: fd.joint.state,
+        joint_holder_postal_code: fd.joint.zip || "",
+        joint_holder_date_of_birth: toISO(fd.joint.dateOfBirth),
+      })
+      return result.id
+    }
+
+    case "corporation": {
+      const fd = formData as CorporationFields | undefined
+      if (!fd) {
+        const profile = await createIndividualProfile({
+          email, first_name: firstName, last_name: lastName,
+          phone_number: phone, date_of_birth: dateOfBirth,
+          address, city, state, country: countryCode,
+        })
+        return profile.id
+      }
+
+      const result = await createCorporationProfile({
+        email,
+        name: fd.entityName,
+        country: fd.address.countryCode,
+        street_address: fd.address.address,
+        unit2: fd.address.unit || undefined,
+        city: fd.address.city,
+        region: fd.address.state,
+        postal_code: fd.address.zip || "",
+        // Signing officer
+        signing_officer_first_name: fd.signingOfficer.firstName,
+        signing_officer_last_name: fd.signingOfficer.lastName,
+        signing_officer_date_of_birth: toISO(fd.signingOfficer.dateOfBirth),
+        signing_officer_country: fd.address.countryCode,
+      })
+      return result.id
+    }
+
+    case "trust": {
+      const fd = formData as TrustFields | undefined
+      if (!fd) {
+        const profile = await createIndividualProfile({
+          email, first_name: firstName, last_name: lastName,
+          phone_number: phone, date_of_birth: dateOfBirth,
+          address, city, state, country: countryCode,
+        })
+        return profile.id
+      }
+
+      const result = await createTrustProfile({
+        email,
+        name: fd.trustName,
+        country: fd.address.countryCode,
+        street_address: fd.address.address,
+        unit2: fd.address.unit || undefined,
+        city: fd.address.city,
+        region: fd.address.state,
+        postal_code: fd.address.zip || "",
+        trustees: [
+          {
+            first_name: fd.trustee.firstName,
+            last_name: fd.trustee.lastName,
+            date_of_birth: toISO(fd.trustee.dateOfBirth),
+          },
+        ],
+      })
+      return result.id
+    }
+
+    default:
+      return undefined
   }
 }

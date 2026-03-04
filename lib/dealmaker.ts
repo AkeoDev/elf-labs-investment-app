@@ -320,6 +320,136 @@ export async function createIndividualProfile(
   })
 }
 
+// ─── Type-specific profile payloads ─────────────────────────────────────────
+
+export interface JointProfilePayload {
+  email: string
+  joint_type?: "joint_tenant" | "tenants_in_common" | "community_property"
+  // Primary holder
+  first_name: string
+  last_name: string
+  suffix?: string
+  country: string
+  street_address: string
+  unit2?: string
+  city: string
+  region: string
+  postal_code: string
+  date_of_birth: string
+  taxpayer_id?: string
+  phone_number?: string
+  income?: number
+  net_worth?: number
+  reg_cf_prior_offerings_amount?: number
+  // Joint holder
+  joint_holder_first_name: string
+  joint_holder_last_name: string
+  joint_holder_suffix?: string
+  joint_holder_country: string
+  joint_holder_street_address: string
+  joint_holder_unit2?: string
+  joint_holder_city: string
+  joint_holder_region: string
+  joint_holder_postal_code: string
+  joint_holder_date_of_birth: string
+  joint_holder_taxpayer_id?: string
+}
+
+export interface CorporationProfilePayload {
+  email: string
+  // Entity info
+  name: string
+  country: string
+  street_address: string
+  unit2?: string
+  city: string
+  region: string
+  postal_code: string
+  business_number?: string
+  phone_number?: string
+  income?: number
+  net_worth?: number
+  reg_cf_prior_offerings_amount?: number
+  // Signing officer
+  signing_officer_first_name: string
+  signing_officer_last_name: string
+  signing_officer_title?: string
+  signing_officer_suffix?: string
+  signing_officer_country: string
+  signing_officer_street_address?: string
+  signing_officer_unit2?: string
+  signing_officer_city?: string
+  signing_officer_region?: string
+  signing_officer_postal_code?: string
+  signing_officer_date_of_birth: string
+  signing_officer_taxpayer_id?: string
+  signing_officer_phone_number?: string
+}
+
+export interface TrustProfilePayload {
+  email: string
+  name: string
+  date?: string // trust creation date
+  country: string
+  street_address: string
+  unit2?: string
+  city: string
+  region: string
+  postal_code: string
+  phone_number?: string
+  income?: number
+  net_worth?: number
+  reg_cf_prior_offerings_amount?: number
+  trustees?: {
+    first_name: string
+    last_name: string
+    suffix?: string
+    date_of_birth?: string
+    country?: string
+    street_address?: string
+    unit2?: string
+    city?: string
+    region?: string
+    postal_code?: string
+  }[]
+}
+
+/**
+ * Create a joint investor profile
+ */
+export async function createJointProfile(
+  payload: JointProfilePayload
+): Promise<{ id: number }> {
+  return apiRequest<{ id: number }>("/investor_profiles/joints", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Create a corporation investor profile
+ */
+export async function createCorporationProfile(
+  payload: CorporationProfilePayload
+): Promise<{ id: number }> {
+  return apiRequest<{ id: number }>("/investor_profiles/corporations", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Create a trust investor profile
+ */
+export async function createTrustProfile(
+  payload: TrustProfilePayload
+): Promise<{ id: number }> {
+  return apiRequest<{ id: number }>("/investor_profiles/trusts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
 /**
  * Calculate shares and bonus for a given investment amount
  */

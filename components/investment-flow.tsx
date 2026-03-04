@@ -3,20 +3,57 @@
 import { useState } from "react"
 import { InvestmentAmount } from "@/components/investment-amount"
 import { ContactInformation, type ContactData } from "@/components/contact-information"
+import type { PersonFields, AddressFields, CorporationFields, TrustFields, IRAFields } from "@/lib/investor-types"
 import { AccordionSection } from "@/components/accordion-section"
 import {
   CheckCircle2,
   AlertCircle,
   User,
+  Users,
   Mail,
   Phone,
   DollarSign,
   BarChart3,
   MapPin,
   Building2,
-  Globe,
   Calendar,
+  Briefcase,
 } from "lucide-react"
+
+// ─── Confirmation display helpers ──────────────────────────────────────────
+
+function formatConfirmAddress(a: Partial<AddressFields>): string {
+  const parts: string[] = []
+  if (a.address) {
+    let line = a.address
+    if (a.unit) line += `, ${a.unit}`
+    parts.push(line)
+  }
+  if (a.city) parts.push(a.city)
+  if (a.state) parts.push(a.state)
+  if (a.zip) parts.push(a.zip)
+  if (a.countryName) parts.push(a.countryName)
+  else if (a.countryCode) parts.push(a.countryCode)
+  return parts.join(", ")
+}
+
+function formatDateDisplay(date: string): string {
+  if (!date) return ""
+  let iso = date
+  if (date.includes("/")) {
+    const [mm, dd, yyyy] = date.split("/")
+    iso = `${yyyy}-${mm}-${dd}`
+  }
+  try {
+    return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  } catch {
+    return date
+  }
+}
 
 interface UserData {
   email: string
@@ -74,12 +111,14 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
           lastName: userData.lastName,
           phone: userData.phone,
           countryCode: contactData?.countryCode ?? userData.countryCode,
-          investorType: contactData?.investorType,
+          investorType: contactData?.investorTypeLabel || contactData?.investorType,
           investmentAmount: investmentData?.amount || 0,
           address: contactData?.address,
           city: contactData?.city,
           state: contactData?.state,
           dateOfBirth: contactData?.dateOfBirth,
+          entityName: contactData?.entityName,
+          formData: contactData?.formData,
         }),
       })
 
@@ -108,6 +147,285 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
       setSubmitError("Unable to connect. Please check your internet connection and try again.")
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  // ─── Type-specific confirmation details ─────────────────────────────────
+  const renderInvestorTypeDetails = () => {
+    if (!contactData?.formData) return null
+
+    switch (contactData.investorType) {
+      case "individual": {
+        const fd = contactData.formData as { person?: PersonFields }
+        const p = fd?.person
+        if (!p) return null
+        return (
+          <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Personal Information</h4>
+            <div className="flex items-center gap-3">
+              <User className="w-4 h-4 text-gray-500 shrink-0" />
+              <div className="flex-1">
+                <p className="text-gray-500 text-xs">Full Name</p>
+                <p className="text-white text-sm">{p.firstName} {p.lastName}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-gray-500 text-xs">Address</p>
+                <p className="text-white text-sm">{formatConfirmAddress(p)}</p>
+              </div>
+            </div>
+            {p.phone && (
+              <div className="flex items-center gap-3">
+                <Phone className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Phone</p>
+                  <p className="text-white text-sm">{p.phone}</p>
+                </div>
+              </div>
+            )}
+            {p.dateOfBirth && (
+              <div className="flex items-center gap-3">
+                <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Date of Birth</p>
+                  <p className="text-white text-sm">{formatDateDisplay(p.dateOfBirth)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      }
+
+      case "joint": {
+        const fd = contactData.formData as { primary?: PersonFields; joint?: PersonFields }
+        if (!fd?.primary) return null
+        return (
+          <>
+            {/* Primary Holder */}
+            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Primary Holder</h4>
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Full Name</p>
+                  <p className="text-white text-sm">{fd.primary.firstName} {fd.primary.lastName}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Address</p>
+                  <p className="text-white text-sm">{formatConfirmAddress(fd.primary)}</p>
+                </div>
+              </div>
+              {fd.primary.phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Phone</p>
+                    <p className="text-white text-sm">{fd.primary.phone}</p>
+                  </div>
+                </div>
+              )}
+              {fd.primary.dateOfBirth && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Date of Birth</p>
+                    <p className="text-white text-sm">{formatDateDisplay(fd.primary.dateOfBirth)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Joint Holder */}
+            {fd.joint && (
+              <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+                <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Joint Holder</h4>
+                <div className="flex items-center gap-3">
+                  <Users className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Full Name</p>
+                    <p className="text-white text-sm">{fd.joint.firstName} {fd.joint.lastName}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Address</p>
+                    <p className="text-white text-sm">{formatConfirmAddress(fd.joint)}</p>
+                  </div>
+                </div>
+                {fd.joint.dateOfBirth && (
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-gray-500 text-xs">Date of Birth</p>
+                      <p className="text-white text-sm">{formatDateDisplay(fd.joint.dateOfBirth)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )
+      }
+
+      case "corporation": {
+        const fd = contactData.formData as CorporationFields | undefined
+        if (!fd) return null
+        return (
+          <>
+            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Entity Details</h4>
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Entity Name</p>
+                  <p className="text-white text-sm">{fd.entityName}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Entity Address</p>
+                  <p className="text-white text-sm">{formatConfirmAddress(fd.address)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Signing Officer</h4>
+              <div className="flex items-center gap-3">
+                <Briefcase className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Full Name</p>
+                  <p className="text-white text-sm">{fd.signingOfficer.firstName} {fd.signingOfficer.lastName}</p>
+                </div>
+              </div>
+              {fd.signingOfficer.dateOfBirth && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Date of Birth</p>
+                    <p className="text-white text-sm">{formatDateDisplay(fd.signingOfficer.dateOfBirth)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )
+      }
+
+      case "trust": {
+        const fd = contactData.formData as TrustFields | undefined
+        if (!fd) return null
+        return (
+          <>
+            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Trust Details</h4>
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Trust Name</p>
+                  <p className="text-white text-sm">{fd.trustName}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Trust Address</p>
+                  <p className="text-white text-sm">{formatConfirmAddress(fd.address)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Trustee</h4>
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Full Name</p>
+                  <p className="text-white text-sm">{fd.trustee.firstName} {fd.trustee.lastName}</p>
+                </div>
+              </div>
+              {fd.trustee.dateOfBirth && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Date of Birth</p>
+                    <p className="text-white text-sm">{formatDateDisplay(fd.trustee.dateOfBirth)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )
+      }
+
+      case "ira": {
+        const fd = contactData.formData as IRAFields | undefined
+        if (!fd) return null
+        return (
+          <>
+            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Custodian Details</h4>
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Custodian Name</p>
+                  <p className="text-white text-sm">{fd.custodianName}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Custodian Address</p>
+                  <p className="text-white text-sm">{formatConfirmAddress(fd.custodianAddress)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Account Holder</h4>
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Full Name</p>
+                  <p className="text-white text-sm">{fd.holder.firstName} {fd.holder.lastName}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Address</p>
+                  <p className="text-white text-sm">{formatConfirmAddress(fd.holder)}</p>
+                </div>
+              </div>
+              {fd.holder.phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Phone</p>
+                    <p className="text-white text-sm">{fd.holder.phone}</p>
+                  </div>
+                </div>
+              )}
+              {fd.holder.dateOfBirth && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Date of Birth</p>
+                    <p className="text-white text-sm">{formatDateDisplay(fd.holder.dateOfBirth)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )
+      }
+
+      default:
+        return null
     }
   }
 
@@ -159,8 +477,14 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
             <div className="text-sm mt-2 space-y-0.5">
               <p className="text-gray-400">
                 <span className="text-gray-500">Type: </span>
-                <span className="text-white">{contactData.investorType}</span>
+                <span className="text-white">{contactData.investorTypeLabel || contactData.investorType}</span>
               </p>
+              {contactData.entityName && (
+                <p className="text-gray-400">
+                  <span className="text-gray-500">Entity: </span>
+                  <span className="text-white">{contactData.entityName}</span>
+                </p>
+              )}
               <p className="text-gray-400">
                 <span className="text-gray-500">Location: </span>
                 <span className="text-white">
@@ -188,8 +512,9 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
         <div className="py-4 space-y-4">
           <p className="text-gray-400 text-sm">Please review your details before proceeding.</p>
 
-          {/* Personal details */}
+          {/* Account Details */}
           <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Account Details</h4>
             <div className="flex items-center gap-3">
               <User className="w-4 h-4 text-gray-500 shrink-0" />
               <div className="flex-1">
@@ -215,66 +540,17 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
             </div>
             {contactData?.investorType && (
               <div className="flex items-center gap-3">
-                <User className="w-4 h-4 text-gray-500 shrink-0" />
+                <Briefcase className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex-1">
                   <p className="text-gray-500 text-xs">Investor Type</p>
-                  <p className="text-white text-sm">{contactData.investorType}</p>
-                </div>
-              </div>
-            )}
-            {contactData?.dateOfBirth && (
-              <div className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-gray-500 text-xs">Date of Birth</p>
-                  <p className="text-white text-sm">
-                    {new Date(contactData.dateOfBirth + "T00:00:00").toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </p>
+                  <p className="text-white text-sm">{contactData.investorTypeLabel || contactData.investorType}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Address details */}
-          {contactData?.address && (
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-gray-500 text-xs">Address</p>
-                  <p className="text-white text-sm">{contactData.address}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-gray-500 text-xs">City</p>
-                  <p className="text-white text-sm">{contactData.city}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-gray-500 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-gray-500 text-xs">Country</p>
-                  <p className="text-white text-sm">
-                    {contactData.countryName}{" "}
-                    <span className="text-gray-500 text-xs">({contactData.countryCode})</span>
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-gray-500 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-gray-500 text-xs">State / Province</p>
-                  <p className="text-white text-sm">{contactData.state}</p>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Type-specific investor details */}
+          {renderInvestorTypeDetails()}
 
           {/* Investment details */}
           {investmentData && (
