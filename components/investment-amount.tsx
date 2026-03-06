@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 
 interface InvestmentAmountProps {
   onContinue: (amount: number, shares: number, bonusShares: number) => void
+  defaultAmount?: number
 }
 
 // Static fallbacks - used while loading or if API is unreachable
@@ -24,7 +25,7 @@ interface DealConfig {
   source: "static" | "api"
 }
 
-export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
+export function InvestmentAmount({ onContinue, defaultAmount }: InvestmentAmountProps) {
   const [selectedTier, setSelectedTier] = useState<number | null>(null)
   const [customAmount, setCustomAmount] = useState("")
   const [loading, setLoading] = useState(true)
@@ -57,6 +58,22 @@ export function InvestmentAmount({ onContinue }: InvestmentAmountProps) {
     }
     fetchDealInfo()
   }, [])
+
+  // Pre-fill from existing investor's amount once deal config is loaded
+  const [defaultApplied, setDefaultApplied] = useState(false)
+  useEffect(() => {
+    if (!loading && defaultAmount && defaultAmount > 0 && !defaultApplied) {
+      setDefaultApplied(true)
+      const tierIndex = dealConfig.bonusTiers.findIndex((t) => t.minAmount === defaultAmount)
+      if (tierIndex !== -1) {
+        setSelectedTier(tierIndex)
+        setCustomAmount("")
+      } else {
+        setSelectedTier(null)
+        setCustomAmount(defaultAmount.toString())
+      }
+    }
+  }, [loading, defaultAmount, defaultApplied, dealConfig.bonusTiers])
 
   const { sharePrice, minInvestment, bonusTiers } = dealConfig
 

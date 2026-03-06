@@ -41,9 +41,51 @@ import { IRAForm } from "@/components/investor-forms/ira-form"
 
 // ─── Exported data shape ────────────────────────────────────────────────────
 
+// Profile data from an existing DealMaker investor profile (for autofill)
+export interface ProfileDefaultData {
+  id: number
+  type?: string
+  email?: string
+  firstName?: string
+  lastName?: string
+  phoneNumber?: string
+  dateOfBirth?: string
+  streetAddress?: string
+  unit?: string
+  city?: string
+  region?: string
+  postalCode?: string
+  country?: string
+  entityName?: string
+  signingOfficerFirstName?: string
+  signingOfficerLastName?: string
+  signingOfficerDateOfBirth?: string
+  jointHolderFirstName?: string
+  jointHolderLastName?: string
+  jointHolderDateOfBirth?: string
+  jointHolderStreetAddress?: string
+  jointHolderUnit?: string
+  jointHolderCity?: string
+  jointHolderRegion?: string
+  jointHolderPostalCode?: string
+  jointHolderCountry?: string
+  trustees?: {
+    first_name?: string
+    last_name?: string
+    date_of_birth?: string
+    country?: string
+    street_address?: string
+    unit2?: string
+    city?: string
+    region?: string
+    postal_code?: string
+  }[]
+}
+
 interface ContactInformationProps {
   onContinue: (data: ContactData) => void
   defaultCountryCode?: string
+  defaultProfileData?: ProfileDefaultData
 }
 
 export interface ContactData {
@@ -99,7 +141,15 @@ function isOfficerComplete(o: { firstName: string; lastName: string; dateOfBirth
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ContactInformation({ onContinue, defaultCountryCode }: ContactInformationProps) {
+/** Convert ISO date (YYYY-MM-DD) to display format (DD/MM/YYYY) */
+function isoToDisplay(iso: string): string {
+  if (!iso) return ""
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return iso
+  return `${match[2]}/${match[3]}/${match[1]}`
+}
+
+export function ContactInformation({ onContinue, defaultCountryCode, defaultProfileData }: ContactInformationProps) {
   // Shared data
   const [countries, setCountries] = useState<ApiCountry[]>(STATIC_COUNTRIES)
   const [loadingCountries, setLoadingCountries] = useState(true)
@@ -126,6 +176,132 @@ export function ContactInformation({ onContinue, defaultCountryCode }: ContactIn
 
   const [iraData, setIraData] = useState(emptyIRA())
   const [iraTouched, setIraTouched] = useState(emptyIRATouched())
+
+  // ─── Apply default profile data (existing investor autofill) ────────
+
+  useEffect(() => {
+    if (!defaultProfileData) return
+
+    const p = defaultProfileData
+
+    // Helper: build address fields from profile data
+    const buildAddress = (
+      street?: string,
+      unit?: string,
+      city?: string,
+      region?: string,
+      postalCode?: string,
+      country?: string
+    ): Partial<AddressFields> => ({
+      ...(street ? { address: street } : {}),
+      ...(unit ? { unit } : {}),
+      ...(city ? { city } : {}),
+      ...(region ? { state: region } : {}),
+      ...(postalCode ? { zip: postalCode } : {}),
+      ...(country ? { countryCode: country } : {}),
+    })
+
+    // Map DealMaker profile type to our investor type keys
+    const typeMap: Record<string, InvestorTypeKey> = {
+      individual: "individual",
+      joint: "joint",
+      corporation: "corporation",
+      trust: "trust",
+    }
+
+    const mappedType = p.type ? typeMap[p.type] : undefined
+    if (mappedType) {
+      setInvestorType(mappedType)
+    }
+
+    // Build primary address from profile
+    const primaryAddr = buildAddress(
+      p.streetAddress,
+      p.unit,
+      p.city,
+      p.region,
+      p.postalCode,
+      p.country
+    )
+
+    const primaryDob = p.dateOfBirth ? isoToDisplay(p.dateOfBirth) : ""
+
+    switch (mappedType) {
+      case "individual": {
+        setIndividualData({
+          person: {
+            ...emptyPerson(),
+            ...(p.firstName ? { firstName: p.firstName } : {}),
+            ...(p.lastName ? { lastName: p.lastName } : {}),
+            ...(p.phoneNumber ? { phone: p.phoneNumber.replace(/^\+\d+/, "") } : {}),
+            ...(primaryDob ? { dateOfBirth: primaryDob } : {}),
+            ...primaryAddr,
+          },
+        })
+        break
+      }
+
+      case "joint": {
+        const jointAddr = buildAddress(
+          p.jointHolderStreetAddress,
+          p.jointHolderUnit,
+          p.jointHolderCity,
+          p.jointHolderRegion,
+          p.jointHolderPostalCode,
+          p.jointHolderCountry
+        )
+        const jointDob = p.jointHolderDateOfBirth ? isoToDisplay(p.jointHolderDateOfBirth) : ""
+        setJointData({
+          primary: {
+            ...emptyPerson(),
+            ...(p.firstName ? { firstName: p.firstName } : {}),
+            ...(p.lastName ? { lastName: p.lastName } : {}),
+            ...(p.phoneNumber ? { phone: p.phoneNumber.replace(/^\+\d+/, "") } : {}),
+            ...(primaryDob ? { dateOfBirth: primaryDob } : {}),
+            ...primaryAddr,
+          },
+          joint: {
+            ...emptyPerson(),
+            ...(p.jointHolderFirstName ? { firstName: p.jointHolderFirstName } : {}),
+            ...(p.jointHolderLastName ? { lastName: p.jointHolderLastName } : {}),
+            ...(jointDob ? { dateOfBirth: jointDob } : {}),
+            ...jointAddr,
+          },
+        })
+        break
+      }
+
+      case "corporation": {
+        const officerDob = p.signingOfficerDateOfBirth ? isoToDisplay(p.signingOfficerDateOfBirth) : ""
+        setCorpData({
+          entityName: p.entityName || "",
+          address: { ...emptyAddress(), ...primaryAddr },
+          signingOfficer: {
+            firstName: p.signingOfficerFirstName || "",
+            lastName: p.signingOfficerLastName || "",
+            dateOfBirth: officerDob,
+          },
+        })
+        break
+      }
+
+      case "trust": {
+        const trustee = p.trustees?.[0]
+        const trusteeDob = trustee?.date_of_birth ? isoToDisplay(trustee.date_of_birth) : ""
+        setTrustData({
+          trustName: p.entityName || "",
+          address: { ...emptyAddress(), ...primaryAddr },
+          trustee: {
+            firstName: trustee?.first_name || "",
+            lastName: trustee?.last_name || "",
+            dateOfBirth: trusteeDob,
+          },
+        })
+        break
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultProfileData])
 
   // ─── Fetch countries ────────────────────────────────────────────────
 

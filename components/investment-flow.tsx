@@ -4,7 +4,7 @@ import { useState } from "react"
 import { InvestmentAmount } from "@/components/investment-amount"
 import { ContactInformation, type ContactData } from "@/components/contact-information"
 import type { PersonFields, AddressFields, CorporationFields, TrustFields, IRAFields } from "@/lib/investor-types"
-import { AccordionSection } from "@/components/accordion-section"
+import type { ExistingInvestorData } from "@/app/page"
 import {
   CheckCircle2,
   AlertCircle,
@@ -18,6 +18,7 @@ import {
   Building2,
   Calendar,
   Briefcase,
+  X,
 } from "lucide-react"
 
 // ─── Confirmation display helpers ──────────────────────────────────────────
@@ -63,7 +64,13 @@ interface UserData {
   countryCode: string
 }
 
-export function InvestmentFlow({ userData }: { userData: UserData }) {
+interface InvestmentFlowProps {
+  userData: UserData
+  existingInvestor?: ExistingInvestorData | null
+  onDismissExisting?: () => void
+}
+
+export function InvestmentFlow({ userData, existingInvestor, onDismissExisting }: InvestmentFlowProps) {
   const [activeSection, setActiveSection] = useState(1)
   const [investmentData, setInvestmentData] = useState<{
     amount: number
@@ -71,7 +78,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
     bonusShares: number
   } | null>(null)
   const [contactData, setContactData] = useState<ContactData | null>(null)
-  const [completedSections, setCompletedSections] = useState<number[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState("")
   const [submitSuccess, setSubmitSuccess] = useState(false)
@@ -87,13 +93,11 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
 
   const handleInvestmentComplete = (amount: number, shares: number, bonusShares: number) => {
     setInvestmentData({ amount, shares, bonusShares })
-    setCompletedSections([...completedSections, 1])
     setActiveSection(2)
   }
 
   const handleContactComplete = (data: ContactData) => {
     setContactData(data)
-    setCompletedSections([...completedSections, 2])
     setActiveSection(3)
   }
 
@@ -119,6 +123,7 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
           dateOfBirth: contactData?.dateOfBirth,
           entityName: contactData?.entityName,
           formData: contactData?.formData,
+          existingInvestorId: existingInvestor?.investor?.id,
         }),
       })
 
@@ -126,7 +131,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
 
       if (res.ok && data.success) {
         setSubmitSuccess(true)
-        setCompletedSections([...completedSections, 3])
         if (data.investor?.accessLink) {
           setAccessLink(data.investor.accessLink)
         }
@@ -430,87 +434,54 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
   }
 
   return (
-    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-6 md:p-6">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 sm:p-6">
+      <div className="flex items-center gap-2 mb-6">
         <span className="w-3 h-3 rounded-sm bg-[#e91e8c]" />
         <h2 className="text-white font-medium">Begin your Investment</h2>
       </div>
 
-      {/* Section 1: Investment Amount */}
-      <AccordionSection
-        number={1}
-        title="Investment Amount"
-        isActive={activeSection === 1}
-        isCompleted={completedSections.includes(1)}
-        onToggle={() => setActiveSection(activeSection === 1 ? 0 : 1)}
-        summary={
-          investmentData && (
-            <div className="flex justify-between text-sm mt-2">
-              <div>
-                <span className="text-gray-500">Amount</span>
-                <span className="text-white ml-4">
-                  ${investmentData.amount.toLocaleString("en-US", { minimumFractionDigits: 0 })}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500">Total Shares</span>
-                <span className="text-white ml-4">
-                  {(investmentData.shares + investmentData.bonusShares).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          )
-        }
-      >
-        <InvestmentAmount onContinue={handleInvestmentComplete} />
-      </AccordionSection>
+      {/* Welcome back banner for existing investors */}
+      {existingInvestor?.found && (
+        <div className="bg-[#1a2744]/80 border border-[#e91e8c]/30 rounded-lg p-4 mb-4 flex items-start justify-between">
+          <div>
+            <p className="text-white font-medium">
+              Welcome back, {existingInvestor.investor?.firstName || userData.firstName}!
+            </p>
+            <p className="text-gray-400 text-sm mt-1">
+              We found your previous investment record. Your details have been pre-filled.
+            </p>
+          </div>
+          <button
+            onClick={onDismissExisting}
+            className="text-gray-500 hover:text-gray-300 ml-4 shrink-0"
+            title="Dismiss and proceed as new investor"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
-      {/* Section 2: Contact Information */}
-      <AccordionSection
-        number={2}
-        title="Contact Information"
-        isActive={activeSection === 2}
-        isCompleted={completedSections.includes(2)}
-        onToggle={() => setActiveSection(activeSection === 2 ? 0 : 2)}
-        summary={
-          contactData && (
-            <div className="text-sm mt-2 space-y-0.5">
-              <p className="text-gray-400">
-                <span className="text-gray-500">Type: </span>
-                <span className="text-white">{contactData.investorTypeLabel || contactData.investorType}</span>
-              </p>
-              {contactData.entityName && (
-                <p className="text-gray-400">
-                  <span className="text-gray-500">Entity: </span>
-                  <span className="text-white">{contactData.entityName}</span>
-                </p>
-              )}
-              <p className="text-gray-400">
-                <span className="text-gray-500">Location: </span>
-                <span className="text-white">
-                  {contactData.city}, {contactData.state}, {contactData.countryName}
-                </span>
-              </p>
-            </div>
-          )
-        }
-      >
+      {/* Step 1: Investment Amount */}
+      {activeSection === 1 && (
+        <InvestmentAmount
+          onContinue={handleInvestmentComplete}
+          defaultAmount={existingInvestor?.investor?.investmentAmount}
+        />
+      )}
+
+      {/* Step 2: Contact Information */}
+      {activeSection === 2 && (
         <ContactInformation
           onContinue={handleContactComplete}
           defaultCountryCode={userData.countryCode}
+          defaultProfileData={existingInvestor?.profile || undefined}
         />
-      </AccordionSection>
+      )}
 
-      {/* Section 3: Investor Confirmation */}
-      <AccordionSection
-        number={3}
-        title="Investor Confirmation"
-        isActive={activeSection === 3}
-        isCompleted={completedSections.includes(3)}
-        onToggle={() => setActiveSection(activeSection === 3 ? 0 : 3)}
-        isLast
-      >
-        <div className="py-4 space-y-4">
+      {/* Step 3: Investor Confirmation */}
+      {activeSection === 3 && (
+        <div className="space-y-4">
+          <h3 className="text-white text-xl font-semibold text-center">Investor Confirmation</h3>
           <p className="text-gray-400 text-sm">Please review your details before proceeding.</p>
 
           {/* Account Details */}
@@ -595,7 +566,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
           {submitSuccess ? (
             /* Success state */
             <div className="space-y-4">
-              {/* Header confirmation */}
               <div className="flex items-center gap-3 py-3">
                 <CheckCircle2 className="w-6 h-6 text-green-400 shrink-0" />
                 <div>
@@ -608,7 +578,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
                 </div>
               </div>
 
-              {/* Investor details from DealMaker */}
               {investorData && (
                 <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -636,7 +605,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
                 </div>
               )}
 
-              {/* DealMaker OTP portal link */}
               {accessLink && (
                 <div className="space-y-3">
                   <p className="text-gray-400 text-sm">
@@ -654,7 +622,6 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
               )}
             </div>
           ) : (
-            /* Pre-submit state */
             <>
               <div className="bg-[#1a2744]/60 rounded-lg p-4">
                 <p className="text-gray-300 text-sm leading-relaxed">
@@ -686,7 +653,7 @@ export function InvestmentFlow({ userData }: { userData: UserData }) {
             </>
           )}
         </div>
-      </AccordionSection>
+      )}
 
       {/* Footer Links */}
       <div className="flex justify-center gap-2 mt-8 text-sm">

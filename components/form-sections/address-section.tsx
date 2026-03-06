@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { MapPin, Building2 } from "lucide-react"
 import { TextField } from "@/components/form-fields"
-import { STATIC_STATES, PHONE_CODES } from "@/lib/countries"
+import { STATIC_STATES } from "@/lib/countries"
 import type { AddressFields, AddressTouched, ApiCountry } from "@/lib/investor-types"
 import { ChevronDown } from "lucide-react"
 
@@ -30,8 +30,8 @@ export function AddressSection({
   const countryListRef = useRef<HTMLDivElement>(null)
   const stateDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Filter to countries that have a known dial code (matches phone prefix list)
-  const displayCountries = countries.filter((c) => !!PHONE_CODES[c.code])
+  // Show all countries from DealMaker (no phone-code filter)
+  const displayCountries = countries
 
   const selectedCountry = displayCountries.find((c) => c.code === fields.countryCode) ??
     displayCountries[0]
@@ -192,7 +192,7 @@ export function AddressSection({
                     State / Province
                   </span>
                   <span className={`text-sm truncate ${fields.state ? "text-gray-300" : "text-gray-500"}`}>
-                    {fields.state || "Select state"}
+                    {(fields.state && countryStates.find((s) => s.code === fields.state)?.name) || fields.state || "Select state"}
                   </span>
                 </div>
                 <ChevronDown
@@ -208,11 +208,11 @@ export function AddressSection({
                         key={s.code}
                         type="button"
                         onClick={() => {
-                          updateField("state", s.name)
+                          updateField("state", s.code)
                           setStateOpen(false)
                         }}
                         className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
-                          fields.state === s.name ? "bg-white/10 text-white" : "text-gray-300 hover:bg-white/5"
+                          fields.state === s.code ? "bg-white/10 text-white" : "text-gray-300 hover:bg-white/5"
                         }`}
                       >
                         <span>{s.name}</span>

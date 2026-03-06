@@ -3,10 +3,66 @@
 import { useState } from "react"
 import { InitialForm } from "@/components/initial-form"
 import { InvestmentFlow } from "@/components/investment-flow"
-import { Youtube, Twitter, Linkedin, Instagram, Facebook } from "lucide-react"
+
+export interface ExistingInvestorData {
+  found: boolean
+  investor: {
+    id: number
+    email: string
+    firstName: string
+    lastName: string
+    phoneNumber?: string
+    investmentAmount: number
+    state: string
+    fundingState: string
+    accessLink?: string
+  } | null
+  profile: {
+    id: number
+    type?: string
+    email?: string
+    firstName?: string
+    lastName?: string
+    phoneNumber?: string
+    dateOfBirth?: string
+    streetAddress?: string
+    unit?: string
+    city?: string
+    region?: string
+    postalCode?: string
+    country?: string
+    entityName?: string
+    // Corporation signing officer
+    signingOfficerFirstName?: string
+    signingOfficerLastName?: string
+    signingOfficerDateOfBirth?: string
+    // Joint holder
+    jointHolderFirstName?: string
+    jointHolderLastName?: string
+    jointHolderDateOfBirth?: string
+    jointHolderStreetAddress?: string
+    jointHolderUnit?: string
+    jointHolderCity?: string
+    jointHolderRegion?: string
+    jointHolderPostalCode?: string
+    jointHolderCountry?: string
+    // Trust trustees
+    trustees?: {
+      first_name?: string
+      last_name?: string
+      date_of_birth?: string
+      country?: string
+      street_address?: string
+      unit2?: string
+      city?: string
+      region?: string
+      postal_code?: string
+    }[]
+  } | null
+}
 
 export default function InvestmentPage() {
-  const [step, setStep] = useState<"initial" | "flow">("initial") // Default to initial for demo
+  const [step, setStep] = useState<"initial" | "flow">("initial")
   const [userData, setUserData] = useState({
     email: "",
     firstName: "",
@@ -14,10 +70,32 @@ export default function InvestmentPage() {
     phone: "",
     countryCode: "",
   })
+  const [existingInvestor, setExistingInvestor] = useState<ExistingInvestorData | null>(null)
+  const [isCheckingInvestor, setIsCheckingInvestor] = useState(false)
 
-  const handleInitialSubmit = (data: typeof userData) => {
+  const handleInitialSubmit = async (data: typeof userData) => {
     setUserData(data)
-    setStep("flow")
+    setIsCheckingInvestor(true)
+
+    try {
+      const params = new URLSearchParams({
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      })
+      const res = await fetch(`/api/dealmaker/investors?${params}`)
+      if (res.ok) {
+        const result: ExistingInvestorData = await res.json()
+        if (result.found) {
+          setExistingInvestor(result)
+        }
+      }
+    } catch {
+      // Silently proceed as new investor
+    } finally {
+      setIsCheckingInvestor(false)
+      setStep("flow")
+    }
   }
 
   return (
@@ -25,30 +103,13 @@ export default function InvestmentPage() {
       <div className="md:px-8">
 
         {step === "initial" ? (
-          <InitialForm onSubmit={handleInitialSubmit} />
+          <InitialForm onSubmit={handleInitialSubmit} isLoading={isCheckingInvestor} />
         ) : (
-          <>
-            <div className="max-w-6xl mx-auto">
-              {/* Header Stats Bar - Desktop only */}
-              <div className="hidden md:flex justify-end gap-6 mb-4 text-sm">
-                <div className="text-center">
-                  <p className="text-gray-400">Share price</p>
-                  <p className="text-white font-semibold">$2.25 USD</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-400">Min Investment:</p>
-                  <p className="text-white font-semibold">$998.61* USD</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-400">Offering Type:</p>
-                  <p className="text-white font-semibold">Common Stock</p>
-                </div>
-              </div>
-
-
-              <InvestmentFlow userData={userData} />
-            </div>
-          </>
+          <InvestmentFlow
+            userData={userData}
+            existingInvestor={existingInvestor}
+            onDismissExisting={() => setExistingInvestor(null)}
+          />
         )}
       </div>
 

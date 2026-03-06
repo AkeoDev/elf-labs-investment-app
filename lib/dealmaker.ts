@@ -95,6 +95,77 @@ export interface DealMakerInvestor {
   access_link?: string
 }
 
+// Investor profile returned by GET /investor_profiles/{id}
+// Fields based on what we send when creating profiles + common response fields
+export interface DealMakerInvestorProfile {
+  id: number
+  email?: string
+  type?: "individual" | "joint" | "corporation" | "trust" | "managed"
+  // Individual / primary holder fields
+  first_name?: string
+  last_name?: string
+  suffix?: string
+  date_of_birth?: string
+  phone_number?: string
+  country?: string
+  street_address?: string
+  unit2?: string
+  city?: string
+  region?: string // state/province
+  postal_code?: string
+  taxpayer_id?: string
+  income?: number
+  net_worth?: number
+  reg_cf_prior_offerings_amount?: number
+  // Joint holder fields
+  joint_type?: string
+  joint_holder_first_name?: string
+  joint_holder_last_name?: string
+  joint_holder_suffix?: string
+  joint_holder_date_of_birth?: string
+  joint_holder_country?: string
+  joint_holder_street_address?: string
+  joint_holder_unit2?: string
+  joint_holder_city?: string
+  joint_holder_region?: string
+  joint_holder_postal_code?: string
+  joint_holder_taxpayer_id?: string
+  // Corporation / Trust fields
+  name?: string // entity or trust name
+  business_number?: string
+  date?: string // trust creation date
+  // Signing officer (corporation)
+  signing_officer_first_name?: string
+  signing_officer_last_name?: string
+  signing_officer_title?: string
+  signing_officer_suffix?: string
+  signing_officer_date_of_birth?: string
+  signing_officer_country?: string
+  signing_officer_street_address?: string
+  signing_officer_unit2?: string
+  signing_officer_city?: string
+  signing_officer_region?: string
+  signing_officer_postal_code?: string
+  signing_officer_taxpayer_id?: string
+  signing_officer_phone_number?: string
+  // Trustees (trust)
+  trustees?: {
+    first_name?: string
+    last_name?: string
+    suffix?: string
+    date_of_birth?: string
+    country?: string
+    street_address?: string
+    unit2?: string
+    city?: string
+    region?: string
+    postal_code?: string
+  }[]
+  // Timestamps
+  created_at?: string
+  updated_at?: string
+}
+
 export interface Deal {
   id: number
   title: string
@@ -267,6 +338,32 @@ export async function getInvestorAccessLink(
   return apiRequest<{ access_link: string }>(
     `/deals/${id}/investors/${investorId}/otp_access_link`
   )
+}
+
+/**
+ * Get investor profile IDs by email
+ * Uses GET /investor_profiles/by_email
+ */
+export async function getProfileIdsByEmail(
+  email: string
+): Promise<number[]> {
+  const params = new URLSearchParams({ email })
+  const result = await apiRequest<number[] | { ids?: number[] }>(
+    `/investor_profiles/by_email?${params}`
+  )
+  if (Array.isArray(result)) return result
+  if (result && Array.isArray(result.ids)) return result.ids
+  return []
+}
+
+/**
+ * Get a full investor profile by ID
+ * Uses GET /investor_profiles/{id}
+ */
+export async function getInvestorProfile(
+  profileId: number
+): Promise<DealMakerInvestorProfile> {
+  return apiRequest<DealMakerInvestorProfile>(`/investor_profiles/${profileId}`)
 }
 
 /**

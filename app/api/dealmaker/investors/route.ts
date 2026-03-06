@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import {
   createInvestor,
+  updateInvestor,
+  listInvestors,
+  getProfileIdsByEmail,
+  getInvestorProfile,
   createIndividualProfile,
   createJointProfile,
   createCorporationProfile,
@@ -9,6 +13,7 @@ import {
   validateInvestment,
   getInvestorAccessLink,
 } from "@/lib/dealmaker"
+import type { DealMakerInvestorProfile } from "@/lib/dealmaker"
 import { dateToISO } from "@/lib/investor-types"
 import type {
   PersonFields,
@@ -19,10 +24,146 @@ import type {
 } from "@/lib/investor-types"
 
 /**
+ * GET /api/dealmaker/investors?email=...&firstName=...&lastName=...
+ *
+ * Look up an existing investor by email (with optional name verification).
+ * Returns investor record (investment amount, ID) and profile data (address, DOB, type).
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const email = searchParams.get("email")
+    const firstName = searchParams.get("firstName") || ""
+    const lastName = searchParams.get("lastName") || ""
+
+    if (!email) {
+      return NextResponse.json(
+        { error: "Missing required query parameter: email" },
+        { status: 400 }
+      )
+    }
+
+    // Run both lookups in parallel for speed
+    const [investorsResult, profileIdsResult] = await Promise.allSettled([
+      listInvestors(undefined, { q: email, per_page: 50 }),
+      getProfileIdsByEmail(email),
+    ])
+
+    // Process investor records (for investment amount + investor ID)
+    let investorMatch: {
+      id: number
+      email: string
+      firstName: string
+      lastName: string
+      phoneNumber?: string
+      investmentAmount: number
+      state: string
+      fundingState: string
+      accessLink?: string
+    } | null = null
+
+    if (investorsResult.status === "fulfilled") {
+      const investors = investorsResult.value
+      // Exact email match, filter out inactive, verify name if provided
+      const matches = investors
+        .filter((inv) => inv.email.toLowerCase() === email.toLowerCase())
+        .filter((inv) => inv.state !== "inactive")
+        .filter((inv) => {
+          if (!firstName && !lastName) return true
+          const fnMatch = !firstName || inv.first_name.toLowerCase() === firstName.toLowerCase()
+          const lnMatch = !lastName || inv.last_name.toLowerCase() === lastName.toLowerCase()
+          return fnMatch && lnMatch
+        })
+        .sort((a, b) => b.id - a.id) // most recent first
+
+      if (matches.length > 0) {
+        const inv = matches[0]
+        investorMatch = {
+          id: inv.id,
+          email: inv.email,
+          firstName: inv.first_name,
+          lastName: inv.last_name,
+          phoneNumber: inv.phone_number,
+          investmentAmount: inv.investment_amount,
+          state: inv.state,
+          fundingState: inv.funding_state,
+          accessLink: inv.access_link,
+        }
+      }
+    }
+
+    // Process profile data (for address, DOB, investor type, entity details)
+    let profile: DealMakerInvestorProfile | null = null
+
+    if (profileIdsResult.status === "fulfilled" && profileIdsResult.value.length > 0) {
+      // Get the most recent profile (last ID)
+      const profileIds = profileIdsResult.value
+      const latestProfileId = profileIds[profileIds.length - 1]
+
+      try {
+        profile = await getInvestorProfile(latestProfileId)
+      } catch (profileError) {
+        console.warn("[DealMaker] Failed to fetch investor profile:", profileError)
+      }
+    }
+
+    if (!investorMatch && !profile) {
+      return NextResponse.json({ found: false, investor: null, profile: null })
+    }
+
+    return NextResponse.json({
+      found: true,
+      investor: investorMatch,
+      profile: profile
+        ? {
+            id: profile.id,
+            type: profile.type,
+            email: profile.email,
+            firstName: profile.first_name,
+            lastName: profile.last_name,
+            phoneNumber: profile.phone_number,
+            dateOfBirth: profile.date_of_birth,
+            // Address
+            streetAddress: profile.street_address,
+            unit: profile.unit2,
+            city: profile.city,
+            region: profile.region,
+            postalCode: profile.postal_code,
+            country: profile.country,
+            // Entity / Trust
+            entityName: profile.name,
+            // Corporation signing officer
+            signingOfficerFirstName: profile.signing_officer_first_name,
+            signingOfficerLastName: profile.signing_officer_last_name,
+            signingOfficerDateOfBirth: profile.signing_officer_date_of_birth,
+            // Joint holder
+            jointHolderFirstName: profile.joint_holder_first_name,
+            jointHolderLastName: profile.joint_holder_last_name,
+            jointHolderDateOfBirth: profile.joint_holder_date_of_birth,
+            jointHolderStreetAddress: profile.joint_holder_street_address,
+            jointHolderUnit: profile.joint_holder_unit2,
+            jointHolderCity: profile.joint_holder_city,
+            jointHolderRegion: profile.joint_holder_region,
+            jointHolderPostalCode: profile.joint_holder_postal_code,
+            jointHolderCountry: profile.joint_holder_country,
+            // Trust trustees
+            trustees: profile.trustees,
+          }
+        : null,
+    })
+  } catch (error) {
+    console.error("[DealMaker API] Error searching investors:", error)
+    // Return not found rather than error — lookup failure should not block the flow
+    return NextResponse.json({ found: false, investor: null, profile: null })
+  }
+}
+
+/**
  * POST /api/dealmaker/investors
  *
  * Create a new investor in DealMaker from your custom checkout flow.
  * Supports all 5 investor types with type-specific profile creation.
+ * If existingInvestorId is provided, updates the existing investor instead.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -42,6 +183,7 @@ export async function POST(request: NextRequest) {
       dateOfBirth,
       entityName,
       formData,
+      existingInvestorId,
     } = body
 
     // Validate required fields
@@ -138,11 +280,21 @@ export async function POST(request: NextRequest) {
     if (city) investorPayload.city = city
     if (state) investorPayload.state = state
 
-    console.log("[DealMaker] Creating investor with payload:", JSON.stringify(investorPayload, null, 2))
-    const investor = await createInvestor(
-      investorPayload as Parameters<typeof createInvestor>[0]
-    )
-    console.log("[DealMaker] Investor created:", JSON.stringify(investor, null, 2))
+    let investor
+    if (existingInvestorId) {
+      console.log("[DealMaker] Updating existing investor:", existingInvestorId, "with payload:", JSON.stringify(investorPayload, null, 2))
+      investor = await updateInvestor(
+        existingInvestorId,
+        investorPayload as Parameters<typeof updateInvestor>[1]
+      )
+      console.log("[DealMaker] Investor updated:", JSON.stringify(investor, null, 2))
+    } else {
+      console.log("[DealMaker] Creating investor with payload:", JSON.stringify(investorPayload, null, 2))
+      investor = await createInvestor(
+        investorPayload as Parameters<typeof createInvestor>[0]
+      )
+      console.log("[DealMaker] Investor created:", JSON.stringify(investor, null, 2))
+    }
 
     // Get the access link for the investor to continue
     let accessLink: string | undefined

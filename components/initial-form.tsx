@@ -13,6 +13,7 @@ interface InitialFormProps {
     phone: string
     countryCode: string
   }) => void
+  isLoading?: boolean
 }
 
 /** Convert ISO 3166-1 alpha-2 code to flag emoji (e.g. "US" → "🇺🇸") */
@@ -20,7 +21,7 @@ function isoToFlag(iso: string): string {
   return [...iso.toUpperCase()].map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join("")
 }
 
-export function InitialForm({ onSubmit }: InitialFormProps) {
+export function InitialForm({ onSubmit, isLoading }: InitialFormProps) {
   const [phoneList, setPhoneList] = useState<CountryWithPhone[]>(STATIC_PHONE_LIST)
   const [selectedCountry, setSelectedCountry] = useState<CountryWithPhone>(STATIC_PHONE_LIST[0])
 
@@ -250,15 +251,24 @@ export function InitialForm({ onSubmit }: InitialFormProps) {
 
         <button
           type="submit"
-          disabled={!isFormComplete}
+          disabled={!isFormComplete || isLoading}
           className={`w-full mt-6 font-semibold py-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 ${
-            isFormComplete
+            isFormComplete && !isLoading
               ? "bg-[#e91e8c] hover:bg-[#d11a7d] text-white cursor-pointer shadow-lg shadow-[#e91e8c]/20"
               : "bg-gray-700/50 text-gray-500 cursor-not-allowed opacity-60"
           }`}
         >
-          Continue
-          <span className="text-xl">{"→"}</span>
+          {isLoading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+              Checking...
+            </>
+          ) : (
+            <>
+              Continue
+              <span className="text-xl">{"→"}</span>
+            </>
+          )}
         </button>
       </form>
 
