@@ -689,7 +689,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
                   </p>
                   <a
                     href={accessLink}
-                    target="_self"
+                    target="_blank"
                     className="flex items-center justify-center w-full bg-[#e91e8c] hover:bg-[#d11a7d] text-white font-medium py-4 rounded-full transition-colors"
                   >
                     Verify Phone &amp; Complete Investment
