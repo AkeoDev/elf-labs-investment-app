@@ -84,8 +84,11 @@ export interface ProfileDefaultData {
 
 interface ContactInformationProps {
   onContinue: (data: ContactData) => void
+  onBack?: () => void
   defaultCountryCode?: string
   defaultProfileData?: ProfileDefaultData
+  defaultContactData?: ContactData
+  defaultPhone?: { phone: string; countryCode: string }
 }
 
 export interface ContactData {
@@ -141,6 +144,16 @@ function isOfficerComplete(o: { firstName: string; lastName: string; dateOfBirth
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
+/** Strip the dial-code prefix from an E.164 phone using the ISO country code */
+function stripPhonePrefix(e164Phone: string, isoCode: string): string {
+  const prefix = PHONE_CODES[isoCode]
+  if (prefix && e164Phone.startsWith(prefix)) {
+    return e164Phone.slice(prefix.length)
+  }
+  // Fallback: strip leading + and up to 4 digits (longest country dial code)
+  return e164Phone.replace(/^\+\d{1,4}/, "")
+}
+
 /** Convert ISO date (YYYY-MM-DD) to display format (DD/MM/YYYY) */
 function isoToDisplay(iso: string): string {
   if (!iso) return ""
@@ -149,7 +162,7 @@ function isoToDisplay(iso: string): string {
   return `${match[2]}/${match[3]}/${match[1]}`
 }
 
-export function ContactInformation({ onContinue, defaultCountryCode, defaultProfileData }: ContactInformationProps) {
+export function ContactInformation({ onContinue, onBack, defaultCountryCode, defaultProfileData, defaultContactData, defaultPhone }: ContactInformationProps) {
   // Shared data
   const [countries, setCountries] = useState<ApiCountry[]>(STATIC_COUNTRIES)
   const [loadingCountries, setLoadingCountries] = useState(true)
@@ -302,6 +315,76 @@ export function ContactInformation({ onContinue, defaultCountryCode, defaultProf
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultProfileData])
+
+  // ─── Apply previously entered contact data (back-navigation) ───────
+
+  useEffect(() => {
+    if (!defaultContactData) return
+
+    const type = defaultContactData.investorType as InvestorTypeKey
+    if (type) setInvestorType(type)
+
+    const fd = defaultContactData.formData
+    if (!fd) return
+
+    switch (type) {
+      case "individual":
+        setIndividualData(fd as { person: PersonFields })
+        break
+      case "joint":
+        setJointData(fd as { primary: PersonFields; joint: PersonFields })
+        break
+      case "corporation":
+        setCorpData(fd as CorporationFields)
+        break
+      case "trust":
+        setTrustData(fd as TrustFields)
+        break
+      case "ira":
+        setIraData(fd as IRAFields)
+        break
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultContactData])
+
+  // ─── Apply default phone from initial form (new investor only) ─────
+
+  useEffect(() => {
+    if (!defaultPhone?.phone) return
+    // Don't overwrite data from higher-priority sources
+    if (defaultContactData || defaultProfileData) return
+
+    const bareDigits = stripPhonePrefix(defaultPhone.phone, defaultPhone.countryCode)
+    const isoCode = defaultPhone.countryCode || "US"
+
+    setIndividualData((prev) => ({
+      person: {
+        ...prev.person,
+        phone: prev.person.phone || bareDigits,
+        phoneCountryCode: prev.person.phone ? prev.person.phoneCountryCode : isoCode,
+      },
+    }))
+
+    setJointData((prev) => ({
+      ...prev,
+      primary: {
+        ...prev.primary,
+        phone: prev.primary.phone || bareDigits,
+        phoneCountryCode: prev.primary.phone ? prev.primary.phoneCountryCode : isoCode,
+      },
+      // Joint holder is a different person — don't pre-fill their phone
+    }))
+
+    setIraData((prev) => ({
+      ...prev,
+      holder: {
+        ...prev.holder,
+        phone: prev.holder.phone || bareDigits,
+        phoneCountryCode: prev.holder.phone ? prev.holder.phoneCountryCode : isoCode,
+      },
+    }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultPhone, defaultContactData, defaultProfileData])
 
   // ─── Fetch countries ────────────────────────────────────────────────
 
@@ -655,18 +738,24 @@ export function ContactInformation({ onContinue, defaultCountryCode, defaultProf
         />
       )}
 
-      {/* Continue */}
-      <button
-        onClick={handleContinue}
-        disabled={!isFormComplete}
-        className={`w-full mt-2 font-medium py-4 rounded-full transition-colors ${
-          isFormComplete
-            ? "bg-[#e91e8c] hover:bg-[#d11a7d] text-white"
-            : "bg-gray-700/50 text-gray-500 cursor-not-allowed"
-        }`}
-      >
-        Continue
-      </button>
+      {/* Navigation buttons */}
+      <div className="flex gap-3 mt-2">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="py-4 px-6 rounded-full font-medium flex items-center justify-center gap-2 transition-colors border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white"
+          >
+            <span className="text-lg">←</span>
+            Back
+          </button>
+        )}
+        <button
+          onClick={handleContinue}
+          className="flex-1 font-medium py-4 rounded-full transition-colors bg-[#e91e8c] hover:bg-[#d11a7d] text-white"
+        >
+          Continue
+        </button>
+      </div>
     </div>
   )
 }

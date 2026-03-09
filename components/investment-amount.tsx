@@ -4,7 +4,10 @@ import { useState, useEffect } from "react"
 
 interface InvestmentAmountProps {
   onContinue: (amount: number, shares: number, bonusShares: number) => void
+  onBack?: () => void
   defaultAmount?: number
+  isCreating?: boolean
+  createError?: string
 }
 
 // Static fallbacks - used while loading or if API is unreachable
@@ -25,7 +28,7 @@ interface DealConfig {
   source: "static" | "api"
 }
 
-export function InvestmentAmount({ onContinue, defaultAmount }: InvestmentAmountProps) {
+export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating, createError }: InvestmentAmountProps) {
   const [selectedTier, setSelectedTier] = useState<number | null>(null)
   const [customAmount, setCustomAmount] = useState("")
   const [loading, setLoading] = useState(true)
@@ -108,12 +111,28 @@ export function InvestmentAmount({ onContinue, defaultAmount }: InvestmentAmount
   const calculateBonusShares = (amount: number, percent: number) =>
     Math.floor(calculateShares(amount) * (percent / 100))
 
+  const [validationError, setValidationError] = useState("")
+
   const handleTierSelect = (index: number) => {
     setSelectedTier(index)
     setCustomAmount("")
+    setValidationError("")
   }
 
   const canContinue = activeAmount >= minInvestment
+
+  const handleContinue = () => {
+    if (activeAmount <= 0) {
+      setValidationError("Please select an investment amount or enter a custom amount")
+      return
+    }
+    if (activeAmount < minInvestment) {
+      setValidationError(`Minimum investment is $${minInvestment.toFixed(2)}`)
+      return
+    }
+    setValidationError("")
+    onContinue(activeAmount, baseShares, bonusShares)
+  }
 
   return (
     <div className="space-y-4">
@@ -212,6 +231,7 @@ export function InvestmentAmount({ onContinue, defaultAmount }: InvestmentAmount
               if (val.split(".").length > 2) return
               setCustomAmount(val)
               setSelectedTier(null)
+              setValidationError("")
             }}
             className="bg-transparent text-white text-base outline-none ml-2 flex-1 min-w-0"
           />
@@ -223,17 +243,36 @@ export function InvestmentAmount({ onContinue, defaultAmount }: InvestmentAmount
         )}
       </div>
 
-      {/* Continue button */}
-      <button
-        onClick={() => onContinue(activeAmount, baseShares, bonusShares)}
-        disabled={!canContinue}
-        className={`w-full py-4 rounded-full font-medium flex items-center justify-center gap-2 transition-colors ${
-          canContinue ? "bg-[#e91e8c] hover:bg-[#d11a7d] text-white" : "bg-gray-600 text-gray-400 cursor-not-allowed"
-        }`}
-      >
-        Continue
-        <span className="text-lg">→</span>
-      </button>
+      {/* Validation / creation error */}
+      {(validationError || createError) && (
+        <p className="text-red-400 text-sm text-center">{validationError || createError}</p>
+      )}
+
+      {/* Navigation buttons */}
+      <div className="flex gap-3">
+        {onBack && (
+          <button
+            onClick={onBack}
+            disabled={isCreating}
+            className="py-4 px-6 rounded-full font-medium flex items-center justify-center gap-2 transition-colors border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="text-lg">←</span>
+            Back
+          </button>
+        )}
+        <button
+          onClick={handleContinue}
+          disabled={isCreating}
+          className="flex-1 py-4 rounded-full font-medium flex items-center justify-center gap-2 transition-colors bg-[#e91e8c] hover:bg-[#d11a7d] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isCreating ? "Processing..." : (
+            <>
+              Continue
+              <span className="text-lg">→</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   )
 }

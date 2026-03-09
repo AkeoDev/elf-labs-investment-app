@@ -59,6 +59,22 @@ export interface InvestorProfile {
   country?: string
 }
 
+export interface IndividualProfilePayload {
+  email: string
+  first_name: string
+  last_name: string
+  suffix?: string
+  country?: string
+  street_address?: string
+  unit2?: string
+  city?: string
+  region?: string
+  postal_code?: string
+  date_of_birth?: string
+  taxpayer_id?: string
+  phone_number?: string
+}
+
 export interface CreateInvestorPayload {
   email: string
   first_name: string
@@ -75,7 +91,7 @@ export interface CreateInvestorPayload {
   date_of_birth?: string
   address?: string
   city?: string
-  state?: string
+  postal_code?: string
 }
 
 export interface DealMakerInvestor {
@@ -409,9 +425,9 @@ export async function getCountries(): Promise<DealMakerCountry[]> {
  * Create an individual investor profile
  */
 export async function createIndividualProfile(
-  profile: Omit<InvestorProfile, "type" | "id">
-): Promise<InvestorProfile> {
-  return apiRequest<InvestorProfile>("/investor_profiles/individuals", {
+  profile: IndividualProfilePayload
+): Promise<{ id: number }> {
+  return apiRequest<{ id: number }>("/investor_profiles/individuals", {
     method: "POST",
     body: JSON.stringify(profile),
   })

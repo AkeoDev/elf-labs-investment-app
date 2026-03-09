@@ -14,6 +14,8 @@ interface InitialFormProps {
     countryCode: string
   }) => void
   isLoading?: boolean
+  error?: string
+  onErrorClear?: () => void
 }
 
 /** Convert ISO 3166-1 alpha-2 code to flag emoji (e.g. "US" → "🇺🇸") */
@@ -21,7 +23,7 @@ function isoToFlag(iso: string): string {
   return [...iso.toUpperCase()].map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join("")
 }
 
-export function InitialForm({ onSubmit, isLoading }: InitialFormProps) {
+export function InitialForm({ onSubmit, isLoading, error, onErrorClear }: InitialFormProps) {
   const [phoneList, setPhoneList] = useState<CountryWithPhone[]>(STATIC_PHONE_LIST)
   const [selectedCountry, setSelectedCountry] = useState<CountryWithPhone>(STATIC_PHONE_LIST[0])
 
@@ -118,7 +120,7 @@ export function InitialForm({ onSubmit, isLoading }: InitialFormProps) {
     placeholder="Email"
     value={formData.email}
     onBlur={() => setTouched({ ...touched, email: true })}
-    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+    onChange={(e) => { setFormData({ ...formData, email: e.target.value }); onErrorClear?.() }}
     className={`w-full bg-transparent border rounded-lg py-4 px-4
     text-white placeholder-white
     focus:outline-none focus:border-white
@@ -147,7 +149,7 @@ export function InitialForm({ onSubmit, isLoading }: InitialFormProps) {
     placeholder="First Name"
     value={formData.firstName}
     onBlur={() => setTouched({ ...touched, firstName: true })}
-    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+    onChange={(e) => { setFormData({ ...formData, firstName: e.target.value }); onErrorClear?.() }}
     className={`w-full bg-transparent border rounded-lg py-4 px-4
     text-white placeholder-white
     focus:outline-none focus:border-white
@@ -171,7 +173,7 @@ export function InitialForm({ onSubmit, isLoading }: InitialFormProps) {
     placeholder="Last Name"
     value={formData.lastName}
     onBlur={() => setTouched({ ...touched, lastName: true })}
-    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+    onChange={(e) => { setFormData({ ...formData, lastName: e.target.value }); onErrorClear?.() }}
     className={`w-full bg-transparent border rounded-lg py-4 px-4
     text-white placeholder-white
     focus:outline-none focus:border-white
@@ -210,6 +212,7 @@ export function InitialForm({ onSubmit, isLoading }: InitialFormProps) {
         onChange={(e) => {
           const value = e.target.value.replace(/[^0-9]/g, "")
           setFormData({ ...formData, phone: value })
+          onErrorClear?.()
         }}
         className="w-full bg-transparent py-4 px-4 text-white placeholder-white focus:outline-none"
       />
@@ -270,6 +273,10 @@ export function InitialForm({ onSubmit, isLoading }: InitialFormProps) {
             </>
           )}
         </button>
+
+        {error && (
+          <p className="text-red-400 text-sm text-center mt-3">{error}</p>
+        )}
       </form>
 
       <p className="text-[#F8F8F8]/80 text-sm text-center mt-6 leading-relaxed">

@@ -6,6 +6,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    serverSourceMaps: false,
+  },
 }
 
 export default nextConfig

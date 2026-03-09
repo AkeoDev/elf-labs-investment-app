@@ -278,7 +278,6 @@ export async function POST(request: NextRequest) {
     if (dateOfBirth) investorPayload.date_of_birth = dateOfBirth
     if (address) investorPayload.address = address
     if (city) investorPayload.city = city
-    if (state) investorPayload.state = state
 
     let investor
     if (existingInvestorId) {
@@ -399,11 +398,13 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
         first_name: person?.firstName ?? firstName,
         last_name: person?.lastName ?? lastName,
         phone_number: phone,
-        date_of_birth: person ? toISO(person.dateOfBirth) : dateOfBirth,
-        address: person?.address ?? address,
-        city: person?.city ?? city,
-        state: person?.state ?? state,
-        country: person?.countryCode ?? countryCode,
+        date_of_birth: person ? toISO(person.dateOfBirth) : (dateOfBirth || ""),
+        street_address: person?.address ?? address ?? "",
+        unit2: person?.unit || undefined,
+        city: person?.city ?? city ?? "",
+        region: person?.state ?? state ?? "",
+        postal_code: person?.zip ?? "",
+        country: person?.countryCode ?? countryCode ?? "",
       })
       return profile.id
     }
@@ -414,8 +415,9 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
         // Fallback: create as individual if joint data missing
         const profile = await createIndividualProfile({
           email, first_name: firstName, last_name: lastName,
-          phone_number: phone, date_of_birth: dateOfBirth,
-          address, city, state, country: countryCode,
+          phone_number: phone, date_of_birth: dateOfBirth || "",
+          street_address: address || "", city: city || "",
+          region: state || "", country: countryCode || "",
         })
         return profile.id
       }
@@ -453,8 +455,9 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
       if (!fd) {
         const profile = await createIndividualProfile({
           email, first_name: firstName, last_name: lastName,
-          phone_number: phone, date_of_birth: dateOfBirth,
-          address, city, state, country: countryCode,
+          phone_number: phone, date_of_birth: dateOfBirth || "",
+          street_address: address || "", city: city || "",
+          region: state || "", country: countryCode || "",
         })
         return profile.id
       }
@@ -482,8 +485,9 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
       if (!fd) {
         const profile = await createIndividualProfile({
           email, first_name: firstName, last_name: lastName,
-          phone_number: phone, date_of_birth: dateOfBirth,
-          address, city, state, country: countryCode,
+          phone_number: phone, date_of_birth: dateOfBirth || "",
+          street_address: address || "", city: city || "",
+          region: state || "", country: countryCode || "",
         })
         return profile.id
       }
