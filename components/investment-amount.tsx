@@ -219,11 +219,11 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
               {/* Right column: Badges */}
               {tier.bonusPercent > 0 ? (
                 <div className="flex items-center gap-2">
-                  <div className="bg-[#e91e8c] text-[#F8F8F8] rounded-lg px-3 py-2 text-center flex-1">
+                  <div style={{ backgroundColor: isSelected ? '#e91e8c' : 'rgba(233, 30, 140, 0.6)' }} className="text-white rounded-lg px-3 py-2 text-center flex-1">
                     <span className="font-bold text-sm block leading-snug">+{tierBonusShares.toLocaleString()}</span>
                     <span className="text-xs font-medium block leading-snug">Free Shares</span>
                   </div>
-                  <div className="bg-[#e91e8c] text-[#F8F8F8] rounded-lg px-3 py-2 text-center flex-1">
+                  <div style={{ backgroundColor: isSelected ? '#e91e8c' : 'rgba(233, 30, 140, 0.6)' }} className="text-white rounded-lg px-3 py-2 text-center flex-1">
                     <span className="font-bold text-sm block leading-snug">{tier.bonusPercent.toFixed(2)}%</span>
                     <span className="text-xs font-medium block leading-snug">Bonus</span>
                   </div>
