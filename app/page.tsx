@@ -73,10 +73,27 @@ export default function InvestmentPage() {
   const [existingInvestor, setExistingInvestor] = useState<ExistingInvestorData | null>(null)
   const [isCheckingInvestor, setIsCheckingInvestor] = useState(false)
   const [profileId, setProfileId] = useState<number | null>(null)
+  const [investorId, setInvestorId] = useState<number | null>(null)
+  const [investmentData, setInvestmentData] = useState<{
+    amount: number
+    shares: number
+    bonusShares: number
+  } | null>(null)
   const [earlyCreateError, setEarlyCreateError] = useState("")
 
-  const handleInitialSubmit = async (data: typeof userData) => {
-    setUserData(data)
+  const handleInitialSubmit = async (data: {
+    email: string
+    firstName: string
+    lastName: string
+    phone: string
+    countryCode: string
+    investmentAmount: number
+    shares: number
+    bonusShares: number
+  }) => {
+    const { investmentAmount, shares, bonusShares, ...userFields } = data
+    setUserData(userFields)
+    setInvestmentData({ amount: investmentAmount, shares, bonusShares })
     setIsCheckingInvestor(true)
     setEarlyCreateError("")
 
@@ -93,13 +110,14 @@ export default function InvestmentPage() {
         const result: ExistingInvestorData = await res.json()
         if (result.found) {
           setExistingInvestor(result)
+          if (result.investor?.id) setInvestorId(result.investor.id)
           setStep("flow")
           return
         }
       }
 
       // Step 2: No existing investor found — create profile in DealMaker
-      // (catches phone validation errors early, before the full flow)
+      // Phase 1: profile-only (catches phone validation errors early)
       const earlyRes = await fetch("/api/dealmaker/investors/early-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -115,13 +133,38 @@ export default function InvestmentPage() {
 
       const earlyData = await earlyRes.json()
 
-      if (earlyRes.ok && earlyData.success) {
-        setProfileId(earlyData.profileId)
-        setStep("flow")
-      } else {
-        // Show DealMaker error on the initial form
+      if (!earlyRes.ok || !earlyData.success) {
         setEarlyCreateError(earlyData.error || "Something went wrong. Please try again.")
+        return
       }
+
+      const newProfileId = earlyData.profileId
+      setProfileId(newProfileId)
+
+      // Step 3: Phase 2 — create investor with amount + profileId
+      try {
+        const phase2Res = await fetch("/api/dealmaker/investors/early-create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            phone: data.phone,
+            countryCode: data.countryCode,
+            investmentAmount,
+            profileId: newProfileId,
+          }),
+        })
+        const phase2Data = await phase2Res.json()
+        if (phase2Res.ok && phase2Data.success && phase2Data.investorId) {
+          setInvestorId(phase2Data.investorId)
+        }
+      } catch {
+        // Phase 2 failure is non-critical — investor will be created at final step
+      }
+
+      setStep("flow")
     } catch {
       // Network error — still proceed (DealMaker creation will happen at final step)
       setStep("flow")
@@ -140,6 +183,8 @@ export default function InvestmentPage() {
             isLoading={isCheckingInvestor}
             error={earlyCreateError}
             onErrorClear={() => setEarlyCreateError("")}
+            defaultAmount={investmentData?.amount}
+            defaultUserData={userData.email ? userData : undefined}
           />
         ) : (
           <InvestmentFlow
@@ -148,6 +193,8 @@ export default function InvestmentPage() {
             onDismissExisting={() => setExistingInvestor(null)}
             onBack={() => setStep("initial")}
             profileId={profileId}
+            investmentData={investmentData}
+            initialInvestorId={investorId}
           />
         )}
       </div>

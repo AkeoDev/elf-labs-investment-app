@@ -88,6 +88,7 @@ interface ContactInformationProps {
   defaultProfileData?: ProfileDefaultData
   defaultContactData?: ContactData
   defaultPhone?: { phone: string; countryCode: string }
+  defaultName?: { firstName: string; lastName: string }
 }
 
 export interface ContactData {
@@ -154,14 +155,14 @@ function isoToDisplay(iso: string): string {
   return `${match[2]}/${match[3]}/${match[1]}`
 }
 
-export function ContactInformation({ onContinue, onBack, defaultCountryCode, defaultProfileData, defaultContactData, defaultPhone }: ContactInformationProps) {
+export function ContactInformation({ onContinue, onBack, defaultCountryCode, defaultProfileData, defaultContactData, defaultPhone, defaultName }: ContactInformationProps) {
   // Shared data
   const [countries, setCountries] = useState<ApiCountry[]>(STATIC_COUNTRIES)
   const [loadingCountries, setLoadingCountries] = useState(true)
   const [phoneList, setPhoneList] = useState<CountryWithPhone[]>(STATIC_PHONE_LIST)
 
   // Investor type selection
-  const [investorType, setInvestorType] = useState<InvestorTypeKey | "">("")
+  const [investorType, setInvestorType] = useState<InvestorTypeKey | "">("individual")
   const [investorTypeOpen, setInvestorTypeOpen] = useState(false)
   const [investorTypeTouched, setInvestorTypeTouched] = useState(false)
   const investorTypeRef = useRef<HTMLDivElement>(null)
@@ -347,21 +348,26 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultContactData])
 
-  // ─── Apply default phone from initial form (new investor only) ─────
+  // ─── Apply defaults from initial form (new investor only) ──────────
 
   useEffect(() => {
-    if (!defaultPhone?.phone) return
     // Don't overwrite data from higher-priority sources
     if (defaultContactData || defaultProfileData) return
 
-    const bareDigits = stripPhonePrefix(defaultPhone.phone, defaultPhone.countryCode)
-    const isoCode = defaultPhone.countryCode || "US"
+    const bareDigits = defaultPhone?.phone
+      ? stripPhonePrefix(defaultPhone.phone, defaultPhone.countryCode)
+      : ""
+    const isoCode = defaultPhone?.countryCode || "US"
+    const firstName = defaultName?.firstName || ""
+    const lastName = defaultName?.lastName || ""
 
     setIndividualData((prev) => ({
       person: {
         ...prev.person,
-        phone: prev.person.phone || bareDigits,
-        phoneCountryCode: prev.person.phone ? prev.person.phoneCountryCode : isoCode,
+        ...(firstName && !prev.person.firstName ? { firstName } : {}),
+        ...(lastName && !prev.person.lastName ? { lastName } : {}),
+        ...(isoCode && !prev.person.countryCode ? { countryCode: isoCode } : {}),
+        ...(bareDigits && !prev.person.phone ? { phone: bareDigits, phoneCountryCode: isoCode } : {}),
       },
     }))
 
@@ -369,22 +375,26 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
       ...prev,
       primary: {
         ...prev.primary,
-        phone: prev.primary.phone || bareDigits,
-        phoneCountryCode: prev.primary.phone ? prev.primary.phoneCountryCode : isoCode,
+        ...(firstName && !prev.primary.firstName ? { firstName } : {}),
+        ...(lastName && !prev.primary.lastName ? { lastName } : {}),
+        ...(isoCode && !prev.primary.countryCode ? { countryCode: isoCode } : {}),
+        ...(bareDigits && !prev.primary.phone ? { phone: bareDigits, phoneCountryCode: isoCode } : {}),
       },
-      // Joint holder is a different person — don't pre-fill their phone
+      // Joint holder is a different person — don't pre-fill their name/phone
     }))
 
     setIraData((prev) => ({
       ...prev,
       holder: {
         ...prev.holder,
-        phone: prev.holder.phone || bareDigits,
-        phoneCountryCode: prev.holder.phone ? prev.holder.phoneCountryCode : isoCode,
+        ...(firstName && !prev.holder.firstName ? { firstName } : {}),
+        ...(lastName && !prev.holder.lastName ? { lastName } : {}),
+        ...(isoCode && !prev.holder.countryCode ? { countryCode: isoCode } : {}),
+        ...(bareDigits && !prev.holder.phone ? { phone: bareDigits, phoneCountryCode: isoCode } : {}),
       },
     }))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultPhone, defaultContactData, defaultProfileData])
+  }, [defaultPhone, defaultName, defaultContactData, defaultProfileData])
 
   // ─── Fetch countries ────────────────────────────────────────────────
 

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { InvestmentAmount } from "@/components/investment-amount"
 import { ContactInformation, type ContactData } from "@/components/contact-information"
 import type { PersonFields, AddressFields, CorporationFields, TrustFields, IRAFields } from "@/lib/investor-types"
 import type { ExistingInvestorData } from "@/app/page"
@@ -70,21 +69,26 @@ interface InvestmentFlowProps {
   onDismissExisting?: () => void
   onBack?: () => void
   profileId?: number | null
+  investmentData: { amount: number; shares: number; bonusShares: number } | null
+  initialInvestorId?: number | null
 }
 
-export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, onBack, profileId }: InvestmentFlowProps) {
+export function InvestmentFlow({
+  userData,
+  existingInvestor,
+  onDismissExisting,
+  onBack,
+  profileId,
+  investmentData: investmentDataProp,
+  initialInvestorId,
+}: InvestmentFlowProps) {
+  // Start directly at Contact Information (step 1), skip investment amount
   const [activeSection, setActiveSection] = useState(1)
-  const [investmentData, setInvestmentData] = useState<{
-    amount: number
-    shares: number
-    bonusShares: number
-  } | null>(null)
+  const [investmentData] = useState(investmentDataProp)
   const [contactData, setContactData] = useState<ContactData | null>(null)
-  const [investorId, setInvestorId] = useState<number | null>(
-    existingInvestor?.investor?.id ?? null
+  const [investorId] = useState<number | null>(
+    initialInvestorId ?? existingInvestor?.investor?.id ?? null
   )
-  const [isCreatingInvestor, setIsCreatingInvestor] = useState(false)
-  const [investorCreateError, setInvestorCreateError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState("")
   const [submitSuccess, setSubmitSuccess] = useState(false)
@@ -98,77 +102,9 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
     numberOfSecurities: number
   } | null>(null)
 
-  const handleInvestmentComplete = async (amount: number, shares: number, bonusShares: number) => {
-    setInvestmentData({ amount, shares, bonusShares })
-    setInvestorCreateError("")
-
-    // If we already have an investorId (existing investor or back-navigation), just proceed
-    if (investorId) {
-      // Update the existing investor with the new amount
-      try {
-        setIsCreatingInvestor(true)
-        await fetch("/api/dealmaker/investors/early-create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: userData.email,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            phone: userData.phone,
-            countryCode: userData.countryCode,
-            investmentAmount: amount,
-            profileId,
-            existingInvestorId: investorId,
-          }),
-        })
-      } catch {
-        // Non-critical — update will happen at final step
-      } finally {
-        setIsCreatingInvestor(false)
-      }
-      setActiveSection(2)
-      return
-    }
-
-    // New investor: create in DealMaker with profileId + actual amount
-    if (profileId) {
-      setIsCreatingInvestor(true)
-      try {
-        const res = await fetch("/api/dealmaker/investors/early-create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: userData.email,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            phone: userData.phone,
-            countryCode: userData.countryCode,
-            investmentAmount: amount,
-            profileId,
-          }),
-        })
-
-        const data = await res.json()
-
-        if (res.ok && data.success) {
-          setInvestorId(data.investorId)
-        }
-        // On failure: proceed anyway — investor will be created at final step.
-        // Only block on 400-level validation errors the user can fix.
-      } catch {
-        // Network error — proceed, investor will be created at final step
-      } finally {
-        setIsCreatingInvestor(false)
-      }
-    }
-
-    // Always proceed to Step 2
-    setActiveSection(2)
-  }
-
   const handleContactComplete = (data: ContactData) => {
     setContactData(data)
-    setActiveSection(3)
+    setActiveSection(2)
   }
 
   const handleSubmitInvestment = async () => {
@@ -585,31 +521,21 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
         </div>
       )}
 
-      {/* Step 1: Investment Amount */}
+      {/* Step 1: Contact Information */}
       {activeSection === 1 && (
-        <InvestmentAmount
-          onContinue={handleInvestmentComplete}
-          onBack={onBack}
-          defaultAmount={investmentData?.amount ?? existingInvestor?.investor?.investmentAmount}
-          isCreating={isCreatingInvestor}
-          createError={investorCreateError}
-        />
-      )}
-
-      {/* Step 2: Contact Information */}
-      {activeSection === 2 && (
         <ContactInformation
           onContinue={handleContactComplete}
-          onBack={() => setActiveSection(1)}
+          onBack={onBack}
           defaultCountryCode={userData.countryCode}
           defaultProfileData={existingInvestor?.profile || undefined}
           defaultContactData={contactData || undefined}
           defaultPhone={{ phone: userData.phone, countryCode: userData.countryCode }}
+          defaultName={{ firstName: userData.firstName, lastName: userData.lastName }}
         />
       )}
 
-      {/* Step 3: Investor Confirmation */}
-      {activeSection === 3 && (
+      {/* Step 2: Investor Confirmation */}
+      {activeSection === 2 && (
         <div className="space-y-4">
           <h3 className="text-white text-xl font-semibold text-center">Investor Confirmation</h3>
           <p className="text-gray-400 text-sm">Please review your details before proceeding.</p>
@@ -657,7 +583,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
           {/* Investment details */}
           {investmentData && (
             <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
-              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Account Details</h4>
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Investment Details</h4>
               <div className="flex items-center gap-3">
                 <DollarSign className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex-1">
@@ -770,7 +696,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
 
               <div className="flex gap-3 mt-2">
                 <button
-                  onClick={() => setActiveSection(2)}
+                  onClick={() => setActiveSection(1)}
                   disabled={isSubmitting}
                   className="py-4 px-6 rounded-full font-medium flex items-center justify-center gap-2 transition-colors border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >

@@ -3,8 +3,6 @@ import {
   createInvestor,
   updateInvestor,
   listInvestors,
-  getProfileIdsByEmail,
-  getInvestorProfile,
   createIndividualProfile,
   createJointProfile,
   createCorporationProfile,
@@ -13,7 +11,7 @@ import {
   validateInvestment,
   getInvestorAccessLink,
 } from "@/lib/dealmaker"
-import type { DealMakerInvestorProfile } from "@/lib/dealmaker"
+import type { DealMakerInvestor } from "@/lib/dealmaker"
 import { dateToISO } from "@/lib/investor-types"
 import type {
   PersonFields,
@@ -44,19 +42,19 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Run lookups in parallel: search by email, by phone, and profile by email
+    // Run lookups in parallel: search by email and optionally by phone
     const searches: Promise<unknown>[] = [
       listInvestors(undefined, { q: email, per_page: 50 }),
-      getProfileIdsByEmail(email),
     ]
     // Also search by phone if provided (catches returning investors with different email)
     if (phone) {
       searches.push(listInvestors(undefined, { q: phone, per_page: 50 }))
     }
 
-    const [investorsResult, profileIdsResult, phoneResult] = await Promise.allSettled(searches)
+    const [investorsResult, phoneResult] = await Promise.allSettled(searches)
 
     // Merge investor results from email and phone searches, deduplicate by ID
+    // listInvestors now returns a proper array after unwrapping { items: [...] }
     const allInvestors: DealMakerInvestor[] = []
     const seenIds = new Set<number>()
 
@@ -68,6 +66,15 @@ export async function GET(request: NextRequest) {
             allInvestors.push(inv)
           }
         }
+      }
+    }
+
+    // Helper: split "First Last" into parts
+    const splitName = (fullName: string) => {
+      const parts = (fullName || "").trim().split(/\s+/)
+      return {
+        firstName: parts[0] || "",
+        lastName: parts.slice(1).join(" ") || "",
       }
     }
 
@@ -85,21 +92,21 @@ export async function GET(request: NextRequest) {
     } | null = null
 
     // Match by email OR phone, filter out inactive, use name as tiebreaker
+    const fullName = `${firstName} ${lastName}`.toLowerCase().trim()
     const matches = allInvestors
       .filter((inv) => inv.state !== "inactive")
       .filter((inv) => {
-        const emailMatch = inv.email.toLowerCase() === email.toLowerCase()
+        const invEmail = inv.user?.email || ""
+        const emailMatch = invEmail.toLowerCase() === email.toLowerCase()
         const phoneMatch = phone && inv.phone_number?.includes(phone.replace(/^\+/, ""))
         return emailMatch || phoneMatch
       })
       .sort((a, b) => {
         // Prefer exact email + name match, then email match, then phone match
-        const aEmail = a.email.toLowerCase() === email.toLowerCase() ? 1 : 0
-        const bEmail = b.email.toLowerCase() === email.toLowerCase() ? 1 : 0
-        const aName = (a.first_name.toLowerCase() === firstName.toLowerCase() &&
-          a.last_name.toLowerCase() === lastName.toLowerCase()) ? 1 : 0
-        const bName = (b.first_name.toLowerCase() === firstName.toLowerCase() &&
-          b.last_name.toLowerCase() === lastName.toLowerCase()) ? 1 : 0
+        const aEmail = (a.user?.email || "").toLowerCase() === email.toLowerCase() ? 1 : 0
+        const bEmail = (b.user?.email || "").toLowerCase() === email.toLowerCase() ? 1 : 0
+        const aName = (a.name || "").toLowerCase() === fullName ? 1 : 0
+        const bName = (b.name || "").toLowerCase() === fullName ? 1 : 0
         // Sort by: email+name > email > phone > most recent
         const aScore = aEmail * 2 + aName
         const bScore = bEmail * 2 + bName
@@ -109,13 +116,14 @@ export async function GET(request: NextRequest) {
 
     if (matches.length > 0) {
       const inv = matches[0]
+      const nameParts = splitName(inv.name)
       investorMatch = {
         id: inv.id,
-        email: inv.email,
-        firstName: inv.first_name,
-        lastName: inv.last_name,
+        email: inv.user?.email || "",
+        firstName: nameParts.firstName,
+        lastName: nameParts.lastName,
         phoneNumber: inv.phone_number,
-        investmentAmount: inv.investment_amount,
+        investmentAmount: inv.investment_value,
         state: inv.state,
         fundingState: inv.funding_state,
         accessLink: inv.access_link,
@@ -123,61 +131,69 @@ export async function GET(request: NextRequest) {
     }
 
     // Process profile data (for address, DOB, investor type, entity details)
-    let profile: DealMakerInvestorProfile | null = null
+    // Extract from embedded investor_profile in the investor response
+    // Prefer a completed profile; check all matches for one
+    let embeddedProfile: DealMakerInvestor["investor_profile"] = null
 
-    if (profileIdsResult.status === "fulfilled" && profileIdsResult.value.length > 0) {
-      // Get the most recent profile (last ID)
-      const profileIds = profileIdsResult.value
-      const latestProfileId = profileIds[profileIds.length - 1]
-
-      try {
-        profile = await getInvestorProfile(latestProfileId)
-      } catch (profileError) {
-        console.warn("[DealMaker] Failed to fetch investor profile:", profileError)
-      }
+    // First try the primary match, then check all matches for a completed profile
+    if (matches.length > 0) {
+      // Look for the best profile: prefer complete, then any with data
+      const withCompleteProfile = matches.find(
+        (inv) => inv.investor_profile?.profile?.complete
+      )
+      const withAnyProfile = matches.find(
+        (inv) => inv.investor_profile?.profile?.account_holder?.first_name
+      )
+      embeddedProfile = (withCompleteProfile || withAnyProfile || matches[0])?.investor_profile ?? null
     }
 
-    if (!investorMatch && !profile) {
+    if (!investorMatch && !embeddedProfile) {
       return NextResponse.json({ found: false, investor: null, profile: null })
     }
+
+    // Map embedded profile to our normalized format
+    const ep = embeddedProfile?.profile
+    const holder = ep?.account_holder
+    const addr = holder?.address
+    const joint = ep?.joint_holder
 
     return NextResponse.json({
       found: true,
       investor: investorMatch,
-      profile: profile
+      profile: ep
         ? {
-            id: profile.id,
-            type: profile.type,
-            email: profile.email,
-            firstName: profile.first_name,
-            lastName: profile.last_name,
-            phoneNumber: profile.phone_number,
-            dateOfBirth: profile.date_of_birth,
+            id: investorMatch?.id, // Use investor ID as reference
+            type: ep.type,
+            email: ep.email,
+            firstName: holder?.first_name || null,
+            lastName: holder?.last_name || null,
+            phoneNumber: holder?.phone_number || null,
+            dateOfBirth: holder?.date_of_birth || null,
             // Address
-            streetAddress: profile.street_address,
-            unit: profile.unit2,
-            city: profile.city,
-            region: profile.region,
-            postalCode: profile.postal_code,
-            country: profile.country,
+            streetAddress: addr?.street_address || null,
+            unit: addr?.unit2 || null,
+            city: addr?.city || null,
+            region: addr?.region || null,
+            postalCode: addr?.postal_code || null,
+            country: addr?.country || null,
             // Entity / Trust
-            entityName: profile.name,
+            entityName: ep.name || null,
             // Corporation signing officer
-            signingOfficerFirstName: profile.signing_officer_first_name,
-            signingOfficerLastName: profile.signing_officer_last_name,
-            signingOfficerDateOfBirth: profile.signing_officer_date_of_birth,
+            signingOfficerFirstName: ep.signing_officer_first_name || null,
+            signingOfficerLastName: ep.signing_officer_last_name || null,
+            signingOfficerDateOfBirth: ep.signing_officer_date_of_birth || null,
             // Joint holder
-            jointHolderFirstName: profile.joint_holder_first_name,
-            jointHolderLastName: profile.joint_holder_last_name,
-            jointHolderDateOfBirth: profile.joint_holder_date_of_birth,
-            jointHolderStreetAddress: profile.joint_holder_street_address,
-            jointHolderUnit: profile.joint_holder_unit2,
-            jointHolderCity: profile.joint_holder_city,
-            jointHolderRegion: profile.joint_holder_region,
-            jointHolderPostalCode: profile.joint_holder_postal_code,
-            jointHolderCountry: profile.joint_holder_country,
+            jointHolderFirstName: joint?.first_name || null,
+            jointHolderLastName: joint?.last_name || null,
+            jointHolderDateOfBirth: joint?.date_of_birth || null,
+            jointHolderStreetAddress: joint?.street_address || null,
+            jointHolderUnit: joint?.unit2 || null,
+            jointHolderCity: joint?.city || null,
+            jointHolderRegion: joint?.region || null,
+            jointHolderPostalCode: joint?.postal_code || null,
+            jointHolderCountry: joint?.country || null,
             // Trust trustees
-            trustees: profile.trustees,
+            trustees: ep.trustees,
           }
         : null,
     })
@@ -342,10 +358,10 @@ export async function POST(request: NextRequest) {
       success: true,
       investor: {
         id: investor.id,
-        email: investor.email,
-        name: investor.full_name || `${firstName} ${lastName}`,
+        email: investor.user?.email || email,
+        name: investor.name || `${firstName} ${lastName}`,
         state: investor.state,
-        investmentAmount: investor.investment_amount,
+        investmentAmount: investor.investment_value,
         numberOfSecurities: investor.number_of_securities,
         accessLink,
       },

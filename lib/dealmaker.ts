@@ -96,19 +96,75 @@ export interface CreateInvestorPayload {
 
 export interface DealMakerInvestor {
   id: number
-  full_name: string
-  first_name: string
-  last_name: string
-  email: string
+  name: string // Full name e.g. "Tine Grbec"
+  user: {
+    id: number
+    email: string
+    phone?: string
+  }
   state: "draft" | "invited" | "signed" | "waiting" | "accepted" | "inactive"
-  investment_amount: number
+  funding_state: "unfunded" | "funded" | "overfunded"
+  investment_value: number
   allocated_amount: number
   number_of_securities: number
-  funding_state: "unfunded" | "funded" | "overfunded"
-  created_at: string
-  updated_at: string
   phone_number?: string
   access_link?: string
+  investor_profile_id?: number
+  // Embedded profile data (included in list/get responses)
+  investor_profile?: {
+    profile: {
+      user_id: number
+      email: string
+      type: string
+      complete: boolean
+      account_holder?: {
+        first_name?: string | null
+        last_name?: string | null
+        suffix?: string | null
+        date_of_birth?: string | null
+        taxpayer_id?: string | null
+        phone_number?: string | null
+        address?: {
+          street_address?: string | null
+          unit2?: string | null
+          city?: string | null
+          region?: string | null
+          country?: string | null
+          postal_code?: string | null
+        }
+      }
+      // Joint holder fields (for joint profiles)
+      joint_holder?: {
+        first_name?: string | null
+        last_name?: string | null
+        date_of_birth?: string | null
+        street_address?: string | null
+        unit2?: string | null
+        city?: string | null
+        region?: string | null
+        country?: string | null
+        postal_code?: string | null
+      }
+      // Trust/Corp fields
+      name?: string | null // entity/trust name
+      signing_officer_first_name?: string | null
+      signing_officer_last_name?: string | null
+      signing_officer_date_of_birth?: string | null
+      trustees?: {
+        first_name?: string
+        last_name?: string
+        date_of_birth?: string
+        country?: string
+        street_address?: string
+        unit2?: string
+        city?: string
+        region?: string
+        postal_code?: string
+      }[]
+    }
+  } | null
+  created_at: string
+  updated_at: string
 }
 
 // Investor profile returned by GET /investor_profiles/{id}
@@ -340,7 +396,11 @@ export async function listInvestors(
   const queryString = params.toString()
   const endpoint = `/deals/${id}/investors${queryString ? `?${queryString}` : ""}`
   
-  return apiRequest<DealMakerInvestor[]>(endpoint)
+  const result = await apiRequest<DealMakerInvestor[] | { items: DealMakerInvestor[] }>(endpoint)
+  // DealMaker wraps paginated results in { items: [...] }
+  if (Array.isArray(result)) return result
+  if (result && Array.isArray(result.items)) return result.items
+  return []
 }
 
 /**
