@@ -84,6 +84,7 @@ export default function InvestmentPage() {
       // Step 1: Check for existing investor
       const params = new URLSearchParams({
         email: data.email,
+        phone: data.phone,
         firstName: data.firstName,
         lastName: data.lastName,
       })

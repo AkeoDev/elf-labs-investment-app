@@ -194,6 +194,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
           entityName: contactData?.entityName,
           formData: contactData?.formData,
           existingInvestorId: investorId,
+          existingProfileId: profileId,
         }),
       })
 

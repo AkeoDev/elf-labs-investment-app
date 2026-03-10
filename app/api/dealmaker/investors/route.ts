@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const email = searchParams.get("email")
+    const phone = searchParams.get("phone") || ""
     const firstName = searchParams.get("firstName") || ""
     const lastName = searchParams.get("lastName") || ""
 
@@ -43,11 +44,32 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Run both lookups in parallel for speed
-    const [investorsResult, profileIdsResult] = await Promise.allSettled([
+    // Run lookups in parallel: search by email, by phone, and profile by email
+    const searches: Promise<unknown>[] = [
       listInvestors(undefined, { q: email, per_page: 50 }),
       getProfileIdsByEmail(email),
-    ])
+    ]
+    // Also search by phone if provided (catches returning investors with different email)
+    if (phone) {
+      searches.push(listInvestors(undefined, { q: phone, per_page: 50 }))
+    }
+
+    const [investorsResult, profileIdsResult, phoneResult] = await Promise.allSettled(searches)
+
+    // Merge investor results from email and phone searches, deduplicate by ID
+    const allInvestors: DealMakerInvestor[] = []
+    const seenIds = new Set<number>()
+
+    for (const result of [investorsResult, phoneResult]) {
+      if (result?.status === "fulfilled" && Array.isArray(result.value)) {
+        for (const inv of result.value as DealMakerInvestor[]) {
+          if (!seenIds.has(inv.id)) {
+            seenIds.add(inv.id)
+            allInvestors.push(inv)
+          }
+        }
+      }
+    }
 
     // Process investor records (for investment amount + investor ID)
     let investorMatch: {
@@ -62,33 +84,41 @@ export async function GET(request: NextRequest) {
       accessLink?: string
     } | null = null
 
-    if (investorsResult.status === "fulfilled") {
-      const investors = investorsResult.value
-      // Exact email match, filter out inactive, verify name if provided
-      const matches = investors
-        .filter((inv) => inv.email.toLowerCase() === email.toLowerCase())
-        .filter((inv) => inv.state !== "inactive")
-        .filter((inv) => {
-          if (!firstName && !lastName) return true
-          const fnMatch = !firstName || inv.first_name.toLowerCase() === firstName.toLowerCase()
-          const lnMatch = !lastName || inv.last_name.toLowerCase() === lastName.toLowerCase()
-          return fnMatch && lnMatch
-        })
-        .sort((a, b) => b.id - a.id) // most recent first
+    // Match by email OR phone, filter out inactive, use name as tiebreaker
+    const matches = allInvestors
+      .filter((inv) => inv.state !== "inactive")
+      .filter((inv) => {
+        const emailMatch = inv.email.toLowerCase() === email.toLowerCase()
+        const phoneMatch = phone && inv.phone_number?.includes(phone.replace(/^\+/, ""))
+        return emailMatch || phoneMatch
+      })
+      .sort((a, b) => {
+        // Prefer exact email + name match, then email match, then phone match
+        const aEmail = a.email.toLowerCase() === email.toLowerCase() ? 1 : 0
+        const bEmail = b.email.toLowerCase() === email.toLowerCase() ? 1 : 0
+        const aName = (a.first_name.toLowerCase() === firstName.toLowerCase() &&
+          a.last_name.toLowerCase() === lastName.toLowerCase()) ? 1 : 0
+        const bName = (b.first_name.toLowerCase() === firstName.toLowerCase() &&
+          b.last_name.toLowerCase() === lastName.toLowerCase()) ? 1 : 0
+        // Sort by: email+name > email > phone > most recent
+        const aScore = aEmail * 2 + aName
+        const bScore = bEmail * 2 + bName
+        if (bScore !== aScore) return bScore - aScore
+        return b.id - a.id // most recent first
+      })
 
-      if (matches.length > 0) {
-        const inv = matches[0]
-        investorMatch = {
-          id: inv.id,
-          email: inv.email,
-          firstName: inv.first_name,
-          lastName: inv.last_name,
-          phoneNumber: inv.phone_number,
-          investmentAmount: inv.investment_amount,
-          state: inv.state,
-          fundingState: inv.funding_state,
-          accessLink: inv.access_link,
-        }
+    if (matches.length > 0) {
+      const inv = matches[0]
+      investorMatch = {
+        id: inv.id,
+        email: inv.email,
+        firstName: inv.first_name,
+        lastName: inv.last_name,
+        phoneNumber: inv.phone_number,
+        investmentAmount: inv.investment_amount,
+        state: inv.state,
+        fundingState: inv.funding_state,
+        accessLink: inv.access_link,
       }
     }
 
@@ -184,6 +214,7 @@ export async function POST(request: NextRequest) {
       entityName,
       formData,
       existingInvestorId,
+      existingProfileId,
     } = body
 
     // Validate required fields
@@ -232,26 +263,29 @@ export async function POST(request: NextRequest) {
     const profileType = profileTypeMap[investorType] || "individual"
 
     // ─── Create investor profile (type-specific) ──────────────────────
+    // Reuse existing profile from early-create if available (avoids duplicate + phone errors)
 
-    let profileId: number | undefined
-    try {
-      profileId = await createProfileByType({
-        profileType,
-        investorType,
-        email,
-        firstName,
-        lastName,
-        phone: formattedPhone,
-        countryCode,
-        address,
-        city,
-        state,
-        dateOfBirth,
-        formData,
-      })
-    } catch (profileError) {
-      // Profile creation is non-critical, continue without it
-      console.warn("[DealMaker] Profile creation failed:", profileError)
+    let profileId: number | undefined = existingProfileId || undefined
+    if (!profileId) {
+      try {
+        profileId = await createProfileByType({
+          profileType,
+          investorType,
+          email,
+          firstName,
+          lastName,
+          phone: formattedPhone,
+          countryCode,
+          address,
+          city,
+          state,
+          dateOfBirth,
+          formData,
+        })
+      } catch (profileError) {
+        // Profile creation is non-critical, continue without it
+        console.warn("[DealMaker] Profile creation failed:", profileError)
+      }
     }
 
     // ─── Create the investor in DealMaker ─────────────────────────────
