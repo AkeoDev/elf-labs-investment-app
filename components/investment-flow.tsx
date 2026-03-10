@@ -6,7 +6,6 @@ import { ProgressStepper } from "@/components/progress-stepper"
 import type { PersonFields, AddressFields, CorporationFields, TrustFields, IRAFields } from "@/lib/investor-types"
 import type { ExistingInvestorData } from "@/app/page"
 import {
-  CheckCircle2,
   AlertCircle,
   User,
   Users,
@@ -641,18 +640,6 @@ export function InvestmentFlow({
           {submitSuccess ? (
             /* Success state */
             <div className="space-y-4">
-              <div className="flex items-center gap-3 py-3">
-                <CheckCircle2 className="w-6 h-6 text-green-400 shrink-0" />
-                <div>
-                  <h3 className="text-white font-semibold">Investment Submitted</h3>
-                  <p className="text-gray-400 text-sm">
-                    Your investment of $
-                    {investmentData?.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}{" "}
-                    has been submitted.
-                  </p>
-                </div>
-              </div>
-
               {investorData && (
                 <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-2 text-sm">
                   <div className="flex justify-between">
