@@ -1,10 +1,18 @@
 "use client"
 
 import { PersonSection } from "@/components/form-sections"
+import { DropdownField } from "@/components/form-fields"
 import type { PersonFields, PersonTouched, ApiCountry } from "@/lib/investor-types"
 import type { CountryWithPhone } from "@/lib/countries"
 
+const JOINT_TYPE_OPTIONS = [
+  { value: "joint_tenant", label: "Joint Tenant" },
+  { value: "tenants_in_common", label: "Tenants-in-Common" },
+  { value: "community_property", label: "Community Property" },
+]
+
 export interface JointData {
+  jointType: string
   primary: PersonFields
   joint: PersonFields
 }
@@ -35,6 +43,16 @@ export function JointForm({
 }: JointFormProps) {
   return (
     <div className="space-y-6">
+      {/* Joint ownership type */}
+      <DropdownField
+        placeholder="Select joint type"
+        value={data.jointType}
+        options={JOINT_TYPE_OPTIONS}
+        getLabel={(o) => o.label}
+        getValue={(o) => o.value}
+        onChange={(value) => onChange({ ...data, jointType: value })}
+      />
+
       {/* Primary holder */}
       <PersonSection
         title="Primary Account Holder"

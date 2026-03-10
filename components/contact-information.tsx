@@ -179,7 +179,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
   const [individualData, setIndividualData] = useState({ person: emptyPerson() })
   const [individualTouched, setIndividualTouched] = useState({ person: emptyPersonTouched() })
 
-  const [jointData, setJointData] = useState({ primary: emptyPerson(), joint: emptyPerson() })
+  const [jointData, setJointData] = useState({ jointType: "joint_tenant", primary: emptyPerson(), joint: emptyPerson() })
   const [jointTouched, setJointTouched] = useState({ primary: emptyPersonTouched(), joint: emptyPersonTouched() })
 
   const [corpData, setCorpData] = useState(emptyCorporation())
@@ -265,7 +265,8 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
           p.jointHolderCountry
         )
         const jointDob = p.jointHolderDateOfBirth ? isoToDisplay(p.jointHolderDateOfBirth) : ""
-        setJointData({
+        setJointData((prev) => ({
+          jointType: prev.jointType || "joint_tenant",
           primary: {
             ...emptyPerson(),
             ...(p.firstName ? { firstName: p.firstName } : {}),
@@ -281,7 +282,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
             ...(jointDob ? { dateOfBirth: jointDob } : {}),
             ...jointAddr,
           },
-        })
+        }))
         break
       }
 
@@ -333,7 +334,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         setIndividualData(fd as { person: PersonFields })
         break
       case "joint":
-        setJointData(fd as { primary: PersonFields; joint: PersonFields })
+        setJointData(fd as { jointType: string; primary: PersonFields; joint: PersonFields })
         break
       case "corporation":
         setCorpData(fd as CorporationFields)
@@ -588,13 +589,13 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         <div className="relative">
           <button
             onClick={() => setInvestorTypeOpen(!investorTypeOpen)}
-            className={`w-full bg-[#0D1425] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors ${
+            className={`w-full bg-[#0E031EBF] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors ${
               investorTypeTouched && !investorType
                 ? "border-red-500"
                 : "border-[#F6248833] hover:border-[#F6248866]"
             }`}
           >
-            <span className={typeLabel ? "text-white" : "text-gray-500"}>
+            <span className={typeLabel ? "text-[#F8F8F8]" : "text-[#F8F8F899]"}>
               {typeLabel || "Select an investor type"}
             </span>
             <ChevronDown
@@ -602,7 +603,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
             />
           </button>
           {investorTypeOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[#0D1425] border border-[#F6248833] rounded-lg overflow-hidden z-20">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[#0E031EBF] border border-[#F6248833] rounded-lg overflow-hidden z-20">
               {INVESTOR_TYPES.map((type) => (
                 <button
                   key={type.value}

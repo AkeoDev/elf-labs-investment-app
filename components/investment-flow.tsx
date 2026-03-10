@@ -234,7 +234,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
         const p = fd?.person
         if (!p) return null
         return (
-          <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+          <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
             <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Personal Information</h4>
             <div className="flex items-center gap-3">
               <User className="w-4 h-4 text-gray-500 shrink-0" />
@@ -278,7 +278,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
         return (
           <>
             {/* Primary Holder */}
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Primary Holder</h4>
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4 text-gray-500 shrink-0" />
@@ -316,7 +316,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
 
             {/* Joint Holder */}
             {fd.joint && (
-              <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+              <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
                 <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Joint Holder</h4>
                 <div className="flex items-center gap-3">
                   <Users className="w-4 h-4 text-gray-500 shrink-0" />
@@ -352,7 +352,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
         if (!fd) return null
         return (
           <>
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Entity Details</h4>
               <div className="flex items-center gap-3">
                 <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
@@ -369,7 +369,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
                 </div>
               </div>
             </div>
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Signing Officer</h4>
               <div className="flex items-center gap-3">
                 <Briefcase className="w-4 h-4 text-gray-500 shrink-0" />
@@ -397,7 +397,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
         if (!fd) return null
         return (
           <>
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Trust Details</h4>
               <div className="flex items-center gap-3">
                 <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
@@ -414,7 +414,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
                 </div>
               </div>
             </div>
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Trustee</h4>
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4 text-gray-500 shrink-0" />
@@ -442,7 +442,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
         if (!fd) return null
         return (
           <>
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Custodian Details</h4>
               <div className="flex items-center gap-3">
                 <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
@@ -459,7 +459,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
                 </div>
               </div>
             </div>
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Account Holder</h4>
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4 text-gray-500 shrink-0" />
@@ -504,10 +504,10 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
   }
 
   return (
-    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 sm:p-6">
+    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0D1425] p-4 sm:p-6">
       {/* Welcome back banner for existing investors */}
       {existingInvestor?.found && (
-        <div className="bg-[#1a2744]/80 border border-[#e91e8c]/30 rounded-lg p-4 mb-4 flex items-start justify-between">
+        <div className="bg-[#0D1425]/80 border border-[#e91e8c]/30 rounded-lg p-4 mb-4 flex items-start justify-between">
           <div>
             <p className="text-white font-medium">
               Welcome back, {existingInvestor.investor?.firstName || userData.firstName}!
@@ -556,7 +556,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
           <p className="text-gray-400 text-sm">Please review your details before proceeding.</p>
 
           {/* Account Details */}
-          <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+          <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
             <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Account Details</h4>
             <div className="flex items-center gap-3">
               <User className="w-4 h-4 text-gray-500 shrink-0" />
@@ -597,7 +597,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
 
           {/* Investment details */}
           {investmentData && (
-            <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-3">
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Account Details</h4>
               <div className="flex items-center gap-3">
                 <DollarSign className="w-4 h-4 text-gray-500 shrink-0" />
@@ -650,7 +650,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
               </div>
 
               {investorData && (
-                <div className="bg-[#1a2744]/60 rounded-lg p-4 space-y-2 text-sm">
+                <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Investor ID</span>
                     <span className="text-white font-mono">#{investorData.id}</span>
@@ -694,7 +694,7 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
             </div>
           ) : (
             <>
-              <div className="bg-[#1a2744]/60 rounded-lg p-4">
+              <div className="bg-[#0D1425]/60 rounded-lg p-4">
                 <p className="text-gray-300 text-sm leading-relaxed">
                   By clicking the button below, your investment details will be submitted to our
                   processing partner. You will then receive instructions via email to complete

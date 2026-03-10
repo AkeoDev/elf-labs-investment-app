@@ -175,7 +175,7 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
         </div>
       )}
 
-      <div className="bg-[#1a2744] rounded-lg py-6 px-4 mb-4">
+      <div className="bg-[#F6248829] rounded-lg py-6 px-4 mb-4">
         <div className="flex items-center justify-center gap-6">
           <div className="text-center">
             <p className="text-white text-4xl font-bold">{animatedBase.toLocaleString()}</p>
@@ -219,11 +219,11 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
               {/* Right column: Badges */}
               {tier.bonusPercent > 0 ? (
                 <div className="flex items-center gap-2">
-                  <div className="bg-[#e91e8c]/20 text-[#e91e8c] rounded-lg px-3 py-2 text-center flex-1">
+                  <div className={`${isSelected ? "bg-[#e91e8c]" : "bg-[#e91e8c]/20"} text-[#F8F8F8] rounded-lg px-3 py-2 text-center flex-1`}>
                     <span className="font-bold text-sm block leading-snug">+{tierBonusShares.toLocaleString()}</span>
                     <span className="text-xs font-medium block leading-snug">Free Shares</span>
                   </div>
-                  <div className="bg-[#e91e8c]/20 text-[#e91e8c] rounded-lg px-3 py-2 text-center flex-1">
+                  <div className={`${isSelected ? "bg-[#e91e8c]" : "bg-[#e91e8c]/20"} text-[#F8F8F8] rounded-lg px-3 py-2 text-center flex-1`}>
                     <span className="font-bold text-sm block leading-snug">{tier.bonusPercent.toFixed(2)}%</span>
                     <span className="text-xs font-medium block leading-snug">Bonus</span>
                   </div>
@@ -237,7 +237,7 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
       {/* Custom amount input */}
       <div className="mt-4">
         <div className={`rounded-lg px-4 py-3 flex items-center transition-colors ${
-          selectedTier === null && customAmount ? "bg-[#1a2744] ring-1 ring-[#e91e8c]/40" : "bg-[#1a2744]"
+          selectedTier === null && customAmount ? "bg-[#0E031EBF] ring-1 ring-[#e91e8c]/40" : "bg-[#0E031EBF]"
         }`}>
           <label className="text-gray-400 text-sm whitespace-nowrap">Amount: $</label>
           <input
@@ -253,7 +253,7 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
               setSelectedTier(null)
               setValidationError("")
             }}
-            className="bg-transparent text-white text-base outline-none ml-2 flex-1 min-w-0"
+            className="bg-transparent text-[#F8F8F8] text-base outline-none ml-2 flex-1 min-w-0 placeholder-[#F8F8F899]"
           />
         </div>
         {selectedTier === null && customAmount && activeAmount < minInvestment && (

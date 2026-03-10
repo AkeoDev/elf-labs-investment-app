@@ -138,13 +138,13 @@ export function AddressSection({
           <button
             type="button"
             onClick={() => setCountryOpen(!countryOpen)}
-            className="w-full bg-transparent border border-[#F6248833] hover:border-[#F6248866] rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none"
+            className="w-full bg-[#0E031EBF] border border-[#F6248833] hover:border-[#F6248866] rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none"
           >
             <div className="flex flex-col min-w-0">
               <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">
                 Country{loadingCountries && <span className="ml-1 opacity-50">...</span>}
               </span>
-              <span className="text-gray-300 text-sm truncate">
+              <span className="text-[#F8F8F8] text-sm truncate">
                 {selectedCountry?.name ?? "Select"}
               </span>
             </div>
@@ -154,7 +154,7 @@ export function AddressSection({
           </button>
 
           {countryOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[#0D1425] border border-[#F6248833] rounded-lg shadow-xl overflow-hidden z-30">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[#0E031EBF] border border-[#F6248833] rounded-lg shadow-xl overflow-hidden z-30">
               <div ref={countryListRef} className="max-h-52 overflow-y-auto custom-scrollbar">
                 {displayCountries.map((c) => (
                   <button
@@ -183,7 +183,7 @@ export function AddressSection({
               <button
                 type="button"
                 onClick={() => setStateOpen(!stateOpen)}
-                className={`w-full bg-transparent border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
+                className={`w-full bg-[#0E031EBF] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
                   touched.state && !fields.state ? "border-red-500" : "border-[#F6248833] hover:border-[#F6248866]"
                 }`}
               >
@@ -191,7 +191,7 @@ export function AddressSection({
                   <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">
                     State / Province
                   </span>
-                  <span className={`text-sm truncate ${fields.state ? "text-gray-300" : "text-gray-500"}`}>
+                  <span className={`text-sm truncate ${fields.state ? "text-[#F8F8F8]" : "text-[#F8F8F899]"}`}>
                     {(fields.state && countryStates.find((s) => s.code === fields.state)?.name) || fields.state || "Select state"}
                   </span>
                 </div>
@@ -201,7 +201,7 @@ export function AddressSection({
               </button>
 
               {stateOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0D1425] border border-[#F6248833] rounded-lg shadow-xl overflow-hidden z-30">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0E031EBF] border border-[#F6248833] rounded-lg shadow-xl overflow-hidden z-30">
                   <div className="max-h-52 overflow-y-auto custom-scrollbar">
                     {countryStates.map((s) => (
                       <button

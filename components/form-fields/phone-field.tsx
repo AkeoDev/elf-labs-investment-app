@@ -60,7 +60,7 @@ export function PhoneField({
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        className={`flex border rounded-lg overflow-hidden ${
+        className={`flex border rounded-lg overflow-hidden bg-[#0E031EBF] ${
           hasError ? "border-red-500" : "border-[#F6248833]"
         }`}
       >
@@ -70,8 +70,8 @@ export function PhoneField({
           onClick={() => setShowDropdown(!showDropdown)}
           className="flex items-center gap-1.5 px-3 py-4 border-r border-[#F6248833] hover:bg-white/5 transition-colors"
         >
-          <span className="text-gray-300 text-sm font-medium">{selectedCountry?.name}</span>
-          <span className="text-gray-300 text-sm">{selectedCountry?.phoneCode}</span>
+          <span className="text-[#F8F8F8] text-sm font-medium">{selectedCountry?.name}</span>
+          <span className="text-[#F8F8F8] text-sm">{selectedCountry?.phoneCode}</span>
           <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
         </button>
 
@@ -86,14 +86,14 @@ export function PhoneField({
               const digits = e.target.value.replace(/[^0-9]/g, "")
               onChange(digits, countryCode)
             }}
-            className="w-full bg-transparent py-4 pl-10 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none"
+            className="w-full bg-transparent py-4 pl-10 pr-4 text-[#F8F8F8] placeholder-[#F8F8F899] focus:outline-none"
           />
         </div>
       </div>
 
       {/* Country dropdown menu */}
       {showDropdown && (
-        <div className="absolute z-50 mt-1 w-full bg-[#1a2744] border border-[#F6248833] rounded-lg shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-[#0E031EBF] border border-[#F6248833] rounded-lg shadow-lg overflow-hidden">
           <div ref={listRef} className="max-h-52 overflow-y-auto custom-scrollbar">
             {phoneList.map((c) => (
               <button

@@ -6,7 +6,7 @@ export function AdditionalInfo() {
         <h3 className="text-white font-semibold">Additional Information</h3>
       </div>
 
-      <div className="bg-[#1a2744] rounded-lg p-4 space-y-4 text-sm">
+      <div className="bg-[#0D1425] rounded-lg p-4 space-y-4 text-sm">
         <p className="text-gray-300">
           Please note that while <span className="text-[#e91e8c]">bonus share shares won't be visible at checkout</span>
           , they will be added to your account after your purchase.

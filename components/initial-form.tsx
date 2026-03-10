@@ -112,7 +112,7 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear }: Initia
   }
 
   return (
-    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 sm:p-6 max-w-xl mx-auto">
+    <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0D1425] p-4 sm:p-6 max-w-xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-10">
       <div className="relative">
   <input
@@ -121,8 +121,8 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear }: Initia
     value={formData.email}
     onBlur={() => setTouched({ ...touched, email: true })}
     onChange={(e) => { setFormData({ ...formData, email: e.target.value }); onErrorClear?.() }}
-    className={`w-full bg-transparent border rounded-lg py-4 px-4
-    text-white placeholder-white
+    className={`w-full bg-[#0E031EBF] border rounded-lg py-4 px-4
+    text-[#F8F8F8] placeholder-[#F8F8F899]
     focus:outline-none focus:border-white
     ${
       touched.email && (!formData.email.trim() || !isValidEmail)
@@ -150,8 +150,8 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear }: Initia
     value={formData.firstName}
     onBlur={() => setTouched({ ...touched, firstName: true })}
     onChange={(e) => { setFormData({ ...formData, firstName: e.target.value }); onErrorClear?.() }}
-    className={`w-full bg-transparent border rounded-lg py-4 px-4
-    text-white placeholder-white
+    className={`w-full bg-[#0E031EBF] border rounded-lg py-4 px-4
+    text-[#F8F8F8] placeholder-[#F8F8F899]
     focus:outline-none focus:border-white
     ${
       touched.firstName && !formData.firstName.trim()
@@ -174,8 +174,8 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear }: Initia
     value={formData.lastName}
     onBlur={() => setTouched({ ...touched, lastName: true })}
     onChange={(e) => { setFormData({ ...formData, lastName: e.target.value }); onErrorClear?.() }}
-    className={`w-full bg-transparent border rounded-lg py-4 px-4
-    text-white placeholder-white
+    className={`w-full bg-[#0E031EBF] border rounded-lg py-4 px-4
+    text-[#F8F8F8] placeholder-[#F8F8F899]
     focus:outline-none focus:border-white
     ${
       touched.lastName && !formData.lastName.trim()
@@ -189,7 +189,7 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear }: Initia
 </div>
 
         <div className="relative" ref={dropdownRef}>
-          <div className={`flex border rounded-lg overflow-hidden ${
+          <div className={`flex border rounded-lg overflow-hidden bg-[#0E031EBF] ${
             touched.phone && formData.phone.trim().length < 7 ? "border-red-500" : "border-[#F6248833]"
           }`}>
             {/* Country code dropdown */}
@@ -199,7 +199,7 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear }: Initia
               className="flex items-center gap-1.5 px-3 py-4 border-r border-[#F6248833] hover:bg-white/5 transition-colors"
             >
               <span className="text-lg leading-none">{isoToFlag(selectedCountry.isoCode)}</span>
-              <span className="text-white text-sm">{selectedCountry.phoneCode}</span>
+              <span className="text-[#F8F8F8] text-sm">{selectedCountry.phoneCode}</span>
               <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
             </button>
 
@@ -214,13 +214,13 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear }: Initia
           setFormData({ ...formData, phone: value })
           onErrorClear?.()
         }}
-        className="w-full bg-transparent py-4 px-4 text-white placeholder-white focus:outline-none"
+        className="w-full bg-transparent py-4 px-4 text-[#F8F8F8] placeholder-[#F8F8F899] focus:outline-none"
       />
     </div>
   </div>
 
   {showCountryDropdown && (
-    <div className="absolute z-50 mt-1 w-full bg-[#1a2744] border border-[#F6248833] rounded-lg shadow-lg overflow-hidden">
+    <div className="absolute z-50 mt-1 w-full bg-[#0E031EBF] border border-[#F6248833] rounded-lg shadow-lg overflow-hidden">
       <div ref={listRef} className="max-h-52 overflow-y-auto custom-scrollbar">
         {phoneList.map((cc) => (
           <button

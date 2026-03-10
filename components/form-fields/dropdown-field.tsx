@@ -70,10 +70,10 @@ export function DropdownField<T>({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full bg-transparent border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
+        className={`w-full bg-[#0E031EBF] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
           hasError
             ? "border-red-500"
-            : "border-gray-600 hover:border-gray-400"
+            : "border-[#F6248833] hover:border-[#F6248866]"
         }`}
       >
         {label ? (
@@ -81,12 +81,12 @@ export function DropdownField<T>({
             <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">
               {label}
             </span>
-            <span className={`text-sm truncate ${value ? "text-gray-300" : "text-gray-500"}`}>
+            <span className={`text-sm truncate ${value ? "text-[#F8F8F8]" : "text-[#F8F8F899]"}`}>
               {displayLabel ? getLabel(displayLabel) : placeholder}
             </span>
           </div>
         ) : (
-          <span className={value ? "text-white" : "text-gray-500"}>
+          <span className={value ? "text-[#F8F8F8]" : "text-[#F8F8F899]"}>
             {displayLabel ? getLabel(displayLabel) : placeholder}
           </span>
         )}
@@ -96,7 +96,7 @@ export function DropdownField<T>({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2744] border border-gray-600 rounded-lg shadow-xl overflow-hidden z-30">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0E031EBF] border border-[#F6248833] rounded-lg shadow-xl overflow-hidden z-30">
           <div ref={listRef} className={`${maxHeight} overflow-y-auto custom-scrollbar`}>
             {options.map((o) => {
               const optVal = getValue(o)

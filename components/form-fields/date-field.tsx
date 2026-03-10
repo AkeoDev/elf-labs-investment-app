@@ -77,7 +77,7 @@ export function DateField({
           onChange(result)
         }}
         maxLength={10}
-        className={`w-full bg-transparent border rounded-lg py-4 pl-12 pr-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
+        className={`w-full bg-[#0E031EBF] border rounded-lg py-4 pl-12 pr-4 text-[#F8F8F8] placeholder-[#F8F8F899] focus:outline-none focus:border-gray-400 transition-colors ${
           hasError || isIncomplete ? "border-red-500" : "border-[#F6248833]"
         }`}
       />

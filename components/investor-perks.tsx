@@ -33,7 +33,7 @@ export function InvestorPerks() {
         <button
           onClick={() => setActiveTab("volume")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "volume" ? "bg-[#1a2744] text-white" : "bg-transparent text-gray-400 hover:text-white"
+            activeTab === "volume" ? "bg-[#0D1425] text-white" : "bg-transparent text-gray-400 hover:text-white"
           }`}
         >
           Volume Based
@@ -41,7 +41,7 @@ export function InvestorPerks() {
         <button
           onClick={() => setActiveTab("repeat")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "repeat" ? "bg-[#1a2744] text-white" : "bg-transparent text-gray-400 hover:text-white"
+            activeTab === "repeat" ? "bg-[#0D1425] text-white" : "bg-transparent text-gray-400 hover:text-white"
           }`}
         >
           Repeat Investor
@@ -51,7 +51,7 @@ export function InvestorPerks() {
       {/* Perks Grid */}
       <div className="grid grid-cols-2 gap-3">
         {perks.map((perk, index) => (
-          <div key={index} className="bg-[#1a2744] rounded-lg p-4">
+          <div key={index} className="bg-[#0D1425] rounded-lg p-4">
             <p className="text-gray-400 text-xs mb-1">Invest</p>
             <p className="text-white font-semibold text-sm">{perk.invest}</p>
             <p className="text-gray-400 text-xs mt-3 mb-1">Receive</p>

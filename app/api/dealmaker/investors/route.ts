@@ -411,7 +411,7 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
     }
 
     case "joint": {
-      const fd = formData as { primary?: PersonFields; joint?: PersonFields } | undefined
+      const fd = formData as { jointType?: string; primary?: PersonFields; joint?: PersonFields } | undefined
       if (!fd?.primary || !fd?.joint) {
         // Fallback: create as individual if joint data missing
         const profile = await createIndividualProfile({
@@ -425,7 +425,7 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
 
       const result = await createJointProfile({
         email,
-        joint_type: "joint_tenant",
+        joint_type: (fd.jointType as "joint_tenant" | "tenants_in_common" | "community_property") || "joint_tenant",
         // Primary holder
         first_name: fd.primary.firstName,
         last_name: fd.primary.lastName,
