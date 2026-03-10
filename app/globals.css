@@ -138,6 +138,28 @@ select:-webkit-autofill {
   background-color: transparent !important;
 }
 
+/* Page-level scrollbar for embed */
+html {
+  scrollbar-color: rgba(233, 30, 140, 0.3) transparent;
+  scrollbar-width: auto;
+}
+
+/* Webkit scrollbar styling (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(233, 30, 140, 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(233, 30, 140, 0.5);
+}
+
 /* Custom scrollbar for dark theme */
 .custom-scrollbar {
   scrollbar-color: rgba(233, 30, 140, 0.3) transparent;
