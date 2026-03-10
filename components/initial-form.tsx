@@ -462,12 +462,12 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear, defaultA
                   key={index}
                   type="button"
                   onClick={() => handleTierSelect(index)}
-                  className="w-full py-4 px-4 rounded-lg grid grid-cols-3 items-center gap-1 transition-all bg-transparent"
+                  className="w-full py-4 px-1 rounded-lg grid grid-cols-3 items-center gap-1 transition-all bg-transparent"
                 >
                   {/* Column 1: Radio + Amount */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 sm:gap-3">
                     <div
-                      className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center ${
+                      className={`w-3 h-3 sm:w-6 sm:h-6 flex-shrink-0 rounded-full flex items-center justify-center ${
                         isSelected ? "bg-[#e91e8c]" : "border-2 border-gray-500"
                       }`}
                     />
