@@ -83,7 +83,6 @@ export interface ProfileDefaultData {
 
 interface ContactInformationProps {
   onContinue: (data: ContactData) => void
-  onBack?: () => void
   defaultCountryCode?: string
   defaultProfileData?: ProfileDefaultData
   defaultContactData?: ContactData
@@ -155,7 +154,7 @@ function isoToDisplay(iso: string): string {
   return `${match[2]}/${match[3]}/${match[1]}`
 }
 
-export function ContactInformation({ onContinue, onBack, defaultCountryCode, defaultProfileData, defaultContactData, defaultPhone, defaultName }: ContactInformationProps) {
+export function ContactInformation({ onContinue, defaultCountryCode, defaultProfileData, defaultContactData, defaultPhone, defaultName }: ContactInformationProps) {
   // Shared data
   const [countries, setCountries] = useState<ApiCountry[]>(STATIC_COUNTRIES)
   const [loadingCountries, setLoadingCountries] = useState(true)
@@ -758,20 +757,11 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         />
       )}
 
-      {/* Navigation buttons */}
-      <div className="flex gap-3 mt-2">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="py-4 px-6 rounded-full font-medium flex items-center justify-center gap-2 transition-colors border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white"
-          >
-            <span className="text-lg">←</span>
-            Back
-          </button>
-        )}
+      {/* Navigation button */}
+      <div className="mt-2">
         <button
           onClick={handleContinue}
-          className="flex-1 font-medium py-4 rounded-full transition-colors bg-[#e91e8c] hover:bg-[#d11a7d] text-white"
+          className="w-full font-medium py-4 rounded-full transition-colors bg-[#e91e8c] hover:bg-[#d11a7d] text-white"
         >
           Continue
         </button>

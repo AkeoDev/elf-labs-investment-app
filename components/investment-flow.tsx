@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, type MutableRefObject } from "react"
 import { ContactInformation, type ContactData } from "@/components/contact-information"
+import { ProgressStepper } from "@/components/progress-stepper"
 import type { PersonFields, AddressFields, CorporationFields, TrustFields, IRAFields } from "@/lib/investor-types"
 import type { ExistingInvestorData } from "@/app/page"
 import {
@@ -67,20 +68,26 @@ interface InvestmentFlowProps {
   userData: UserData
   existingInvestor?: ExistingInvestorData | null
   onDismissExisting?: () => void
-  onBack?: () => void
   profileId?: number | null
   investmentData: { amount: number; shares: number; bonusShares: number } | null
   initialInvestorId?: number | null
+  onStepChange?: (step: number) => void
+  goToRef?: MutableRefObject<((section: number) => void) | null>
+  currentStep?: number
+  onStepClick?: (step: number) => void
 }
 
 export function InvestmentFlow({
   userData,
   existingInvestor,
   onDismissExisting,
-  onBack,
   profileId,
   investmentData: investmentDataProp,
   initialInvestorId,
+  onStepChange,
+  goToRef,
+  currentStep,
+  onStepClick,
 }: InvestmentFlowProps) {
   // Start directly at Contact Information (step 1), skip investment amount
   const [activeSection, setActiveSection] = useState(1)
@@ -101,6 +108,20 @@ export function InvestmentFlow({
     investmentAmount: number
     numberOfSecurities: number
   } | null>(null)
+
+  // Sync step changes to parent stepper
+  useEffect(() => {
+    // activeSection 1 = step 2, activeSection 2 = step 3
+    onStepChange?.(activeSection + 1)
+  }, [activeSection, onStepChange])
+
+  // Register goTo handler so parent can navigate us
+  useEffect(() => {
+    if (goToRef) {
+      goToRef.current = (section: number) => setActiveSection(section)
+    }
+    return () => { if (goToRef) goToRef.current = null }
+  }, [goToRef])
 
   const handleContactComplete = (data: ContactData) => {
     setContactData(data)
@@ -500,17 +521,16 @@ export function InvestmentFlow({
 
   return (
     <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0D1425] p-4 sm:p-6">
+      {currentStep !== undefined && (
+        <ProgressStepper currentStep={currentStep} onStepClick={onStepClick} />
+      )}
+
       {/* Welcome back banner for existing investors */}
       {existingInvestor?.found && (
         <div className="bg-[#0D1425]/80 border border-[#e91e8c]/30 rounded-lg p-4 mb-4 flex items-start justify-between">
-          <div>
-            <p className="text-white font-medium">
-              Welcome back, {existingInvestor.investor?.firstName || userData.firstName}!
-            </p>
-            <p className="text-gray-400 text-sm mt-1">
-              We found your previous investment record. Your details have been pre-filled.
-            </p>
-          </div>
+          <p className="text-white font-medium">
+            Welcome back, {existingInvestor.investor?.firstName || userData.firstName} {existingInvestor.investor?.lastName || userData.lastName}!
+          </p>
           <button
             onClick={onDismissExisting}
             className="text-gray-500 hover:text-gray-300 ml-4 shrink-0"
@@ -525,7 +545,6 @@ export function InvestmentFlow({
       {activeSection === 1 && (
         <ContactInformation
           onContinue={handleContactComplete}
-          onBack={onBack}
           defaultCountryCode={userData.countryCode}
           defaultProfileData={existingInvestor?.profile || undefined}
           defaultContactData={contactData || undefined}
@@ -694,19 +713,11 @@ export function InvestmentFlow({
                 </div>
               )}
 
-              <div className="flex gap-3 mt-2">
-                <button
-                  onClick={() => setActiveSection(1)}
-                  disabled={isSubmitting}
-                  className="py-4 px-6 rounded-full font-medium flex items-center justify-center gap-2 transition-colors border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className="text-lg">←</span>
-                  Back
-                </button>
+              <div className="mt-2">
                 <button
                   onClick={handleSubmitInvestment}
                   disabled={isSubmitting}
-                  className="flex-1 bg-[#e91e8c] hover:bg-[#d11a7d] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-4 rounded-full transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-[#e91e8c] hover:bg-[#d11a7d] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-4 rounded-full transition-colors flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? "Submitting Investment..." : (
                     <>

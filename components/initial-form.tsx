@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { ChevronDown } from "lucide-react"
 import { STATIC_PHONE_LIST, buildPhoneList, PHONE_CODES, type CountryWithPhone } from "@/lib/countries"
+import { ProgressStepper } from "@/components/progress-stepper"
 
 interface InitialFormProps {
   onSubmit: (data: {
@@ -21,6 +22,8 @@ interface InitialFormProps {
   onErrorClear?: () => void
   defaultAmount?: number
   defaultUserData?: { email: string; firstName: string; lastName: string; phone: string; countryCode: string }
+  currentStep?: number
+  onStepClick?: (step: number) => void
 }
 
 /** Convert ISO 3166-1 alpha-2 code to flag emoji (e.g. "US" → "🇺🇸") */
@@ -75,7 +78,7 @@ function stripPhonePrefix(e164Phone: string, isoCode: string): string {
   return e164Phone.replace(/^\+\d{1,4}/, "")
 }
 
-export function InitialForm({ onSubmit, isLoading, error, onErrorClear, defaultAmount, defaultUserData }: InitialFormProps) {
+export function InitialForm({ onSubmit, isLoading, error, onErrorClear, defaultAmount, defaultUserData, currentStep, onStepClick }: InitialFormProps) {
   // ─── Phone / country state ────────────────────────────────────────────
   const [phoneList, setPhoneList] = useState<CountryWithPhone[]>(STATIC_PHONE_LIST)
   const [selectedCountry, setSelectedCountry] = useState<CountryWithPhone>(() => {
@@ -269,6 +272,9 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear, defaultA
 
   return (
     <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0D1425] p-4 sm:p-6 max-w-xl mx-auto">
+      {currentStep !== undefined && (
+        <ProgressStepper currentStep={currentStep} onStepClick={onStepClick} />
+      )}
       <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-10">
 
       {/* ─── Contact Fields ─────────────────────────────────────────── */}

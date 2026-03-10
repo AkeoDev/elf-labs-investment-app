@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useRef } from "react"
 import { InitialForm } from "@/components/initial-form"
 import { InvestmentFlow } from "@/components/investment-flow"
 
@@ -80,6 +80,9 @@ export default function InvestmentPage() {
     bonusShares: number
   } | null>(null)
   const [earlyCreateError, setEarlyCreateError] = useState("")
+  const [currentStep, setCurrentStep] = useState(1)
+  // Ref to tell InvestmentFlow to navigate to a specific section
+  const flowGoToRef = useRef<((section: number) => void) | null>(null)
 
   const handleInitialSubmit = async (data: {
     email: string
@@ -112,6 +115,7 @@ export default function InvestmentPage() {
           setExistingInvestor(result)
           if (result.investor?.id) setInvestorId(result.investor.id)
           setStep("flow")
+          setCurrentStep(2)
           return
         }
       }
@@ -165,18 +169,31 @@ export default function InvestmentPage() {
       }
 
       setStep("flow")
+      setCurrentStep(2)
     } catch {
       // Network error — still proceed (DealMaker creation will happen at final step)
       setStep("flow")
+      setCurrentStep(2)
     } finally {
       setIsCheckingInvestor(false)
     }
   }
 
+  const handleStepClick = useCallback((clickedStep: number) => {
+    if (clickedStep >= currentStep) return // Can only go back
+    if (clickedStep === 1) {
+      setStep("initial")
+      setCurrentStep(1)
+    } else if (clickedStep === 2) {
+      // Tell InvestmentFlow to go to section 1 (Contact Info)
+      flowGoToRef.current?.(1)
+      setCurrentStep(2)
+    }
+  }, [currentStep])
+
   return (
     <main className="min-h-screen flex flex-col">
       <div className="md:px-8">
-
         {step === "initial" ? (
           <InitialForm
             onSubmit={handleInitialSubmit}
@@ -185,16 +202,21 @@ export default function InvestmentPage() {
             onErrorClear={() => setEarlyCreateError("")}
             defaultAmount={investmentData?.amount}
             defaultUserData={userData.email ? userData : undefined}
+            currentStep={currentStep}
+            onStepClick={handleStepClick}
           />
         ) : (
           <InvestmentFlow
             userData={userData}
             existingInvestor={existingInvestor}
             onDismissExisting={() => setExistingInvestor(null)}
-            onBack={() => setStep("initial")}
             profileId={profileId}
             investmentData={investmentData}
             initialInvestorId={investorId}
+            onStepChange={setCurrentStep}
+            goToRef={flowGoToRef}
+            currentStep={currentStep}
+            onStepClick={handleStepClick}
           />
         )}
       </div>
