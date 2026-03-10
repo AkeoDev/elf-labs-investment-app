@@ -731,17 +731,6 @@ export function InvestmentFlow({
           )}
         </div>
       )}
-
-      {/* Footer Links */}
-      <div className="flex justify-center gap-2 mt-8 text-sm">
-        <a href="#" className="text-[#e91e8c] hover:underline">
-          Download Contract
-        </a>
-        <span className="text-[#e91e8c]">•</span>
-        <a href="#" className="text-[#e91e8c] hover:underline">
-          Additional documents
-        </a>
-      </div>
     </div>
   )
 }
