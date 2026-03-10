@@ -462,9 +462,9 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear, defaultA
                   key={index}
                   type="button"
                   onClick={() => handleTierSelect(index)}
-                  className="w-full py-4 px-4 rounded-lg grid grid-cols-2 items-center gap-2 transition-all bg-transparent"
+                  className="w-full py-4 px-4 rounded-lg grid grid-cols-3 items-center gap-1 transition-all bg-transparent"
                 >
-                  {/* Left column: Radio + Amount */}
+                  {/* Column 1: Radio + Amount */}
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center ${
@@ -472,24 +472,26 @@ export function InitialForm({ onSubmit, isLoading, error, onErrorClear, defaultA
                       }`}
                     />
                     <div className="text-left">
-                      <p className={`font-bold text-lg ${isSelected ? "text-white" : "text-gray-200"}`}>
+                      <p className={`font-bold text-sm ${isSelected ? "text-white" : "text-gray-200"}`}>
                         Invest ${tier.minAmount.toLocaleString("en-US")}
                       </p>
-                      <p className="text-gray-400 text-base">{tierShares.toLocaleString("en-US")} Shares</p>
+                      <p className="text-gray-400 text-xs">{tierShares.toLocaleString("en-US")} Shares</p>
                     </div>
                   </div>
 
-                  {/* Right column: Badges */}
+                  {/* Column 2: Free Shares badge */}
                   {tier.bonusPercent > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <div style={{ backgroundColor: isSelected ? '#e91e8c' : 'rgba(233, 30, 140, 0.6)' }} className="text-white rounded-lg px-3 py-2 text-center flex-1">
-                        <span className="font-bold text-sm block leading-snug">+{tierBonusShares.toLocaleString("en-US")}</span>
-                        <span className="text-xs font-medium block leading-snug">Free Shares</span>
-                      </div>
-                      <div style={{ backgroundColor: isSelected ? '#e91e8c' : 'rgba(233, 30, 140, 0.6)' }} className="text-white rounded-lg px-3 py-2 text-center flex-1">
-                        <span className="font-bold text-sm block leading-snug">{tier.bonusPercent.toFixed(2)}%</span>
-                        <span className="text-xs font-medium block leading-snug">Bonus</span>
-                      </div>
+                    <div style={{ backgroundColor: isSelected ? '#e91e8c' : 'rgba(233, 30, 140, 0.6)' }} className="text-white rounded-lg px-3 py-2 text-center">
+                      <span className="font-bold text-sm block leading-snug">+{tierBonusShares.toLocaleString("en-US")}</span>
+                      <span className="text-xs font-medium block leading-snug">Free Shares</span>
+                    </div>
+                  ) : <div />}
+
+                  {/* Column 3: Bonus badge */}
+                  {tier.bonusPercent > 0 ? (
+                    <div style={{ backgroundColor: isSelected ? '#e91e8c' : 'rgba(233, 30, 140, 0.6)' }} className="text-white rounded-lg px-3 py-2 text-center">
+                      <span className="font-bold text-sm block leading-snug">{tier.bonusPercent.toFixed(2)}%</span>
+                      <span className="text-xs font-medium block leading-snug">Bonus</span>
                     </div>
                   ) : <div />}
                 </button>
