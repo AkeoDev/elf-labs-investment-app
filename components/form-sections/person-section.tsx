@@ -1,6 +1,6 @@
 "use client"
 
-import { User } from "lucide-react"
+import { User, Shield } from "lucide-react"
 import { TextField, DateField, PhoneField } from "@/components/form-fields"
 import { AddressSection } from "./address-section"
 import type { PersonFields, PersonTouched, ApiCountry } from "@/lib/investor-types"
@@ -14,6 +14,7 @@ interface PersonSectionProps {
   onBlur: (field: keyof PersonTouched) => void
   showPhone?: boolean
   showDob?: boolean
+  showSsn?: boolean
   countries: ApiCountry[]
   loadingCountries?: boolean
   phoneList: CountryWithPhone[]
@@ -27,6 +28,7 @@ export function PersonSection({
   onBlur,
   showPhone = true,
   showDob = true,
+  showSsn = true,
   countries,
   loadingCountries,
   phoneList,
@@ -34,6 +36,16 @@ export function PersonSection({
   function updateField<K extends keyof PersonFields>(key: K, value: PersonFields[K]) {
     onChange({ ...fields, [key]: value })
   }
+
+  function formatSSN(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 9)
+    if (digits.length <= 3) return digits
+    if (digits.length <= 5) return `${digits.slice(0, 3)}-${digits.slice(3)}`
+    return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`
+  }
+
+  const ssnDigits = fields.taxpayerId.replace(/\D/g, "")
+  const isUS = fields.countryCode === "US"
 
   return (
     <div className="space-y-4">
@@ -97,6 +109,21 @@ export function PersonSection({
           onBlur={() => onBlur("dateOfBirth")}
           placeholder="Date of Birth (MM/DD/YYYY)"
           requiredError="Date of birth is required"
+        />
+      )}
+
+      {/* SSN (US only) */}
+      {showSsn && isUS && (
+        <TextField
+          placeholder="Social Security Number (XXX-XX-XXXX)"
+          value={fields.taxpayerId}
+          onChange={(v) => updateField("taxpayerId", formatSSN(v))}
+          touched={touched.taxpayerId}
+          onBlur={() => onBlur("taxpayerId")}
+          error={ssnDigits.length > 0 && ssnDigits.length < 9 ? "SSN must be 9 digits" : undefined}
+          icon={Shield}
+          autoComplete="off"
+          maxLength={11}
         />
       )}
     </div>

@@ -23,6 +23,7 @@ export interface PersonFields extends AddressFields {
   phone: string
   phoneCountryCode: string
   dateOfBirth: string // MM/DD/YYYY for display; convert to ISO on submit
+  taxpayerId: string  // SSN for US investors (XXX-XX-XXXX)
 }
 
 export function emptyAddress(): AddressFields {
@@ -45,6 +46,7 @@ export function emptyPerson(): PersonFields {
     phone: "",
     phoneCountryCode: "US",
     dateOfBirth: "",
+    taxpayerId: "",
   }
 }
 
@@ -72,6 +74,7 @@ export interface PersonTouched extends AddressTouched {
   lastName: boolean
   phone: boolean
   dateOfBirth: boolean
+  taxpayerId: boolean
 }
 
 export function emptyPersonTouched(): PersonTouched {
@@ -81,6 +84,7 @@ export function emptyPersonTouched(): PersonTouched {
     lastName: false,
     phone: false,
     dateOfBirth: false,
+    taxpayerId: false,
   }
 }
 
@@ -110,7 +114,7 @@ export type InvestorTypeKey = (typeof INVESTOR_TYPES)[number]["value"]
 export interface CorporationFields {
   entityName: string
   address: AddressFields
-  signingOfficer: { firstName: string; lastName: string; dateOfBirth: string }
+  signingOfficer: { firstName: string; lastName: string; dateOfBirth: string; taxpayerId: string }
 }
 
 export interface TrustFields {
@@ -129,7 +133,7 @@ export function emptyCorporation(): CorporationFields {
   return {
     entityName: "",
     address: emptyAddress(),
-    signingOfficer: { firstName: "", lastName: "", dateOfBirth: "" },
+    signingOfficer: { firstName: "", lastName: "", dateOfBirth: "", taxpayerId: "" },
   }
 }
 
@@ -155,10 +159,11 @@ export interface OfficerTouched {
   firstName: boolean
   lastName: boolean
   dateOfBirth: boolean
+  taxpayerId: boolean
 }
 
 export function emptyOfficerTouched(): OfficerTouched {
-  return { firstName: false, lastName: false, dateOfBirth: false }
+  return { firstName: false, lastName: false, dateOfBirth: false, taxpayerId: false }
 }
 
 export interface CorporationTouched {

@@ -309,7 +309,7 @@ export async function POST(request: NextRequest) {
       investor: {
         id: investor.id,
         email: investor.email,
-        name: investor.full_name,
+        name: investor.full_name || `${firstName} ${lastName}`,
         state: investor.state,
         investmentAmount: investor.investment_amount,
         numberOfSecurities: investor.number_of_securities,
@@ -405,6 +405,7 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
         region: person?.state ?? state ?? "",
         postal_code: person?.zip ?? "",
         country: person?.countryCode ?? countryCode ?? "",
+        taxpayer_id: person?.taxpayerId || undefined,
       })
       return profile.id
     }
@@ -435,6 +436,7 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
         region: fd.primary.state,
         postal_code: fd.primary.zip || "",
         date_of_birth: toISO(fd.primary.dateOfBirth),
+        taxpayer_id: fd.primary.taxpayerId || undefined,
         phone_number: phone,
         // Joint holder
         joint_holder_first_name: fd.joint.firstName,
@@ -446,6 +448,7 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
         joint_holder_region: fd.joint.state,
         joint_holder_postal_code: fd.joint.zip || "",
         joint_holder_date_of_birth: toISO(fd.joint.dateOfBirth),
+        joint_holder_taxpayer_id: fd.joint.taxpayerId || undefined,
       })
       return result.id
     }
@@ -475,6 +478,7 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
         signing_officer_first_name: fd.signingOfficer.firstName,
         signing_officer_last_name: fd.signingOfficer.lastName,
         signing_officer_date_of_birth: toISO(fd.signingOfficer.dateOfBirth),
+        signing_officer_taxpayer_id: fd.signingOfficer.taxpayerId || undefined,
         signing_officer_country: fd.address.countryCode,
       })
       return result.id

@@ -123,7 +123,8 @@ function isPersonComplete(p: PersonFields, requirePhone: boolean): boolean {
   const addrOk = isAddressComplete(p)
   const phoneOk = !requirePhone || p.phone.trim().length >= 7
   const dobOk = p.dateOfBirth.length === 10
-  return nameOk && addrOk && phoneOk && dobOk
+  const ssnOk = p.countryCode !== "US" || p.taxpayerId.replace(/\D/g, "").length === 9
+  return nameOk && addrOk && phoneOk && dobOk && ssnOk
 }
 
 function isAddressComplete(a: AddressFields): boolean {
@@ -134,12 +135,12 @@ function isAddressComplete(a: AddressFields): boolean {
   )
 }
 
-function isOfficerComplete(o: { firstName: string; lastName: string; dateOfBirth: string }): boolean {
-  return (
-    o.firstName.trim().length > 0 &&
+function isOfficerComplete(o: { firstName: string; lastName: string; dateOfBirth: string; taxpayerId?: string }, countryCode?: string): boolean {
+  const baseOk = o.firstName.trim().length > 0 &&
     o.lastName.trim().length > 0 &&
     o.dateOfBirth.length === 10
-  )
+  const ssnOk = countryCode !== "US" || (o.taxpayerId?.replace(/\D/g, "").length === 9)
+  return baseOk && ssnOk
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -436,7 +437,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         return (
           corpData.entityName.trim().length > 0 &&
           isAddressComplete(corpData.address) &&
-          isOfficerComplete(corpData.signingOfficer)
+          isOfficerComplete(corpData.signingOfficer, corpData.address.countryCode)
         )
       case "trust":
         return (
@@ -463,6 +464,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
       lastName: true,
       phone: true,
       dateOfBirth: true,
+      taxpayerId: true,
       address: true,
       city: true,
       zip: true,
@@ -490,14 +492,14 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         setCorpTouched({
           entityName: true,
           address: touchAllAddress(corpTouched.address),
-          signingOfficer: { firstName: true, lastName: true, dateOfBirth: true },
+          signingOfficer: { firstName: true, lastName: true, dateOfBirth: true, taxpayerId: true },
         })
         break
       case "trust":
         setTrustTouched({
           trustName: true,
           address: touchAllAddress(trustTouched.address),
-          trustee: { firstName: true, lastName: true, dateOfBirth: true },
+          trustee: { firstName: true, lastName: true, dateOfBirth: true, taxpayerId: true },
         })
         break
       case "ira":
