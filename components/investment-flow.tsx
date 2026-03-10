@@ -505,11 +505,6 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
 
   return (
     <div className="rounded-lg border border-[#e91e8c]/30 bg-[#0f1029] p-4 sm:p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <span className="w-3 h-3 rounded-sm bg-[#e91e8c]" />
-        <h2 className="text-white font-medium">Begin your Investment</h2>
-      </div>
-
       {/* Welcome back banner for existing investors */}
       {existingInvestor?.found && (
         <div className="bg-[#1a2744]/80 border border-[#e91e8c]/30 rounded-lg p-4 mb-4 flex items-start justify-between">
