@@ -2,6 +2,26 @@
 
 import { useState, useEffect } from "react"
 
+function useCountUp(target: number, duration = 800): number {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    if (target === 0) { setValue(0); return }
+    const start = performance.now()
+    let raf: number
+    const step = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      // Ease-out for natural deceleration
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setValue(Math.floor(eased * target))
+      if (progress < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [target, duration])
+  return value
+}
+
 interface InvestmentAmountProps {
   onContinue: (amount: number, shares: number, bonusShares: number) => void
   onBack?: () => void
@@ -106,6 +126,8 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
   const bonusPercent = getActiveBonusPercent()
   const baseShares = Math.floor(activeAmount / sharePrice)
   const bonusShares = Math.floor(baseShares * (bonusPercent / 100))
+  const animatedBase = useCountUp(baseShares)
+  const animatedBonus = useCountUp(bonusShares)
 
   const calculateShares = (amount: number) => Math.floor(amount / sharePrice)
   const calculateBonusShares = (amount: number, percent: number) =>
@@ -156,12 +178,12 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
       <div className="bg-[#1a2744] rounded-lg py-6 px-4 mb-4">
         <div className="flex items-center justify-center gap-6">
           <div className="text-center">
-            <p className="text-white text-4xl font-bold">{baseShares.toLocaleString()}</p>
+            <p className="text-white text-4xl font-bold">{animatedBase.toLocaleString()}</p>
             <p className="text-gray-400 text-base">Shares of Elf</p>
           </div>
           <span className="text-gray-400 text-3xl font-light">+</span>
           <div className="text-center">
-            <p className="text-[#e91e8c] text-4xl font-bold">{bonusShares.toLocaleString()}</p>
+            <p className="text-[#e91e8c] text-4xl font-bold">{animatedBonus.toLocaleString()}</p>
             <p className="text-[#e91e8c]/70 text-base">Free Bonus Shares</p>
           </div>
         </div>
@@ -177,17 +199,15 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
             <button
               key={index}
               onClick={() => handleTierSelect(index)}
-              className="w-full py-4 px-4 rounded-lg flex items-center justify-between transition-all bg-transparent"
+              className="w-full py-4 px-4 rounded-lg grid grid-cols-2 items-center gap-2 transition-all bg-transparent"
             >
+              {/* Left column: Radio + Amount */}
               <div className="flex items-center gap-3">
-                {/* Radio circle */}
                 <div
                   className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center ${
                     isSelected ? "bg-[#e91e8c]" : "border-2 border-gray-500"
                   }`}
                 />
-
-                {/* Amount and shares */}
                 <div className="text-left">
                   <p className={`font-bold text-lg ${isSelected ? "text-white" : "text-gray-200"}`}>
                     Invest ${tier.minAmount.toLocaleString()}
@@ -196,19 +216,19 @@ export function InvestmentAmount({ onContinue, onBack, defaultAmount, isCreating
                 </div>
               </div>
 
-              {/* Badges */}
-              {tier.bonusPercent > 0 && (
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <div className="bg-[#e91e8c]/20 text-[#e91e8c] rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-center">
-                    <span className="font-bold text-[10px] sm:text-sm block leading-snug">+{tierBonusShares.toLocaleString()}</span>
-                    <span className="text-[8px] sm:text-xs font-medium block leading-snug">Free Shares</span>
+              {/* Right column: Badges */}
+              {tier.bonusPercent > 0 ? (
+                <div className="flex items-center gap-2">
+                  <div className="bg-[#e91e8c]/20 text-[#e91e8c] rounded-lg px-3 py-2 text-center flex-1">
+                    <span className="font-bold text-sm block leading-snug">+{tierBonusShares.toLocaleString()}</span>
+                    <span className="text-xs font-medium block leading-snug">Free Shares</span>
                   </div>
-                  <div className="bg-[#e91e8c]/20 text-[#e91e8c] rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-center">
-                    <span className="font-bold text-[10px] sm:text-sm block leading-snug">{tier.bonusPercent.toFixed(2)}%</span>
-                    <span className="text-[8px] sm:text-xs font-medium block leading-snug">Bonus</span>
+                  <div className="bg-[#e91e8c]/20 text-[#e91e8c] rounded-lg px-3 py-2 text-center flex-1">
+                    <span className="font-bold text-sm block leading-snug">{tier.bonusPercent.toFixed(2)}%</span>
+                    <span className="text-xs font-medium block leading-snug">Bonus</span>
                   </div>
                 </div>
-              )}
+              ) : <div />}
             </button>
           )
         })}
