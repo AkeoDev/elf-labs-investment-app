@@ -138,7 +138,7 @@ export function AddressSection({
           <button
             type="button"
             onClick={() => setCountryOpen(!countryOpen)}
-            className="w-full bg-[#0E031EBF] border border-[#F6248833] hover:border-[#F6248866] rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none"
+            className="w-full bg-[#0E031EBF] border border-[#F6248833] hover:border-[#F6248866] rounded-lg h-[52px] px-4 text-left flex items-center justify-between transition-colors focus:outline-none"
           >
             <div className="flex flex-col min-w-0">
               <span className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">
@@ -183,7 +183,7 @@ export function AddressSection({
               <button
                 type="button"
                 onClick={() => setStateOpen(!stateOpen)}
-                className={`w-full bg-[#0E031EBF] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
+                className={`w-full bg-[#0E031EBF] border rounded-lg h-[52px] px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
                   touched.state && !fields.state ? "border-red-500" : "border-[#F6248833] hover:border-[#F6248866]"
                 }`}
               >
@@ -231,8 +231,8 @@ export function AddressSection({
               autoComplete="address-level1"
               onBlur={() => onBlur("state")}
               onChange={(e) => updateField("state", e.target.value)}
-              className={`w-full bg-transparent border rounded-lg py-4 px-4 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-gray-400 transition-colors ${
-                touched.state && !fields.state.trim() ? "border-red-500" : "border-[#F6248833]"
+              className={`w-full bg-[#0E031EBF] border rounded-lg h-[52px] px-4 text-[#F8F8F8] placeholder-[#F8F8F899] focus:outline-none focus:border-gray-400 transition-colors ${
+                touched.state && !fields.state.trim() ? "border-red-500" : "border-[#F6248833] hover:border-[#F6248866]"
               }`}
             />
           )}

@@ -70,7 +70,7 @@ export function DropdownField<T>({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full bg-[#0E031EBF] border rounded-lg py-4 px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
+        className={`w-full bg-[#0E031EBF] border rounded-lg ${label ? "h-[52px]" : "py-4"} px-4 text-left flex items-center justify-between transition-colors focus:outline-none ${
           hasError
             ? "border-red-500"
             : "border-[#F6248833] hover:border-[#F6248866]"
