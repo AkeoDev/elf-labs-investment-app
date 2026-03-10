@@ -474,12 +474,22 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
         city: fd.address.city,
         region: fd.address.state,
         postal_code: fd.address.zip || "",
-        // Signing officer
+        // Signing officer — full person fields
         signing_officer_first_name: fd.signingOfficer.firstName,
         signing_officer_last_name: fd.signingOfficer.lastName,
         signing_officer_date_of_birth: toISO(fd.signingOfficer.dateOfBirth),
         signing_officer_taxpayer_id: fd.signingOfficer.taxpayerId || undefined,
-        signing_officer_country: fd.address.countryCode,
+        signing_officer_country: fd.signingOfficer.countryCode || fd.address.countryCode,
+        signing_officer_street_address: fd.signingOfficer.address || undefined,
+        signing_officer_unit2: fd.signingOfficer.unit || undefined,
+        signing_officer_city: fd.signingOfficer.city || undefined,
+        signing_officer_region: fd.signingOfficer.state || undefined,
+        signing_officer_postal_code: fd.signingOfficer.zip || undefined,
+        signing_officer_phone_number: fd.signingOfficer.phone
+          ? formatPhone(fd.signingOfficer.phone, fd.signingOfficer.phoneCountryCode)
+          : undefined,
+        // Note: Beneficial owner data (fd.beneficialOwner) is collected in the UI
+        // but DealMaker does not currently have dedicated beneficial owner fields.
       })
       return result.id
     }

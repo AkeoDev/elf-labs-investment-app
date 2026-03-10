@@ -114,7 +114,8 @@ export type InvestorTypeKey = (typeof INVESTOR_TYPES)[number]["value"]
 export interface CorporationFields {
   entityName: string
   address: AddressFields
-  signingOfficer: { firstName: string; lastName: string; dateOfBirth: string; taxpayerId: string }
+  signingOfficer: PersonFields
+  beneficialOwner: PersonFields
 }
 
 export interface TrustFields {
@@ -133,7 +134,8 @@ export function emptyCorporation(): CorporationFields {
   return {
     entityName: "",
     address: emptyAddress(),
-    signingOfficer: { firstName: "", lastName: "", dateOfBirth: "", taxpayerId: "" },
+    signingOfficer: emptyPerson(),
+    beneficialOwner: emptyPerson(),
   }
 }
 
@@ -169,14 +171,16 @@ export function emptyOfficerTouched(): OfficerTouched {
 export interface CorporationTouched {
   entityName: boolean
   address: AddressTouched
-  signingOfficer: OfficerTouched
+  signingOfficer: PersonTouched
+  beneficialOwner: PersonTouched
 }
 
 export function emptyCorporationTouched(): CorporationTouched {
   return {
     entityName: false,
     address: emptyAddressTouched(),
-    signingOfficer: emptyOfficerTouched(),
+    signingOfficer: emptyPersonTouched(),
+    beneficialOwner: emptyPersonTouched(),
   }
 }
 

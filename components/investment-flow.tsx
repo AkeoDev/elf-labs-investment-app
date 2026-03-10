@@ -378,12 +378,54 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
                   <p className="text-white text-sm">{fd.signingOfficer.firstName} {fd.signingOfficer.lastName}</p>
                 </div>
               </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Address</p>
+                  <p className="text-white text-sm">{formatConfirmAddress(fd.signingOfficer)}</p>
+                </div>
+              </div>
+              {fd.signingOfficer.phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Phone</p>
+                    <p className="text-white text-sm">{fd.signingOfficer.phone}</p>
+                  </div>
+                </div>
+              )}
               {fd.signingOfficer.dateOfBirth && (
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
                   <div className="flex-1">
                     <p className="text-gray-500 text-xs">Date of Birth</p>
                     <p className="text-white text-sm">{formatDateDisplay(fd.signingOfficer.dateOfBirth)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="bg-[#0D1425]/60 rounded-lg p-4 space-y-3">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Beneficial Owner</h4>
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4 text-gray-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Full Name</p>
+                  <p className="text-white text-sm">{fd.beneficialOwner.firstName} {fd.beneficialOwner.lastName}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Address</p>
+                  <p className="text-white text-sm">{formatConfirmAddress(fd.beneficialOwner)}</p>
+                </div>
+              </div>
+              {fd.beneficialOwner.dateOfBirth && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Date of Birth</p>
+                    <p className="text-white text-sm">{formatDateDisplay(fd.beneficialOwner.dateOfBirth)}</p>
                   </div>
                 </div>
               )}

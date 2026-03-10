@@ -292,10 +292,12 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
           entityName: p.entityName || "",
           address: { ...emptyAddress(), ...primaryAddr },
           signingOfficer: {
+            ...emptyPerson(),
             firstName: p.signingOfficerFirstName || "",
             lastName: p.signingOfficerLastName || "",
             dateOfBirth: officerDob,
           },
+          beneficialOwner: emptyPerson(),
         })
         break
       }
@@ -438,7 +440,8 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         return (
           corpData.entityName.trim().length > 0 &&
           isAddressComplete(corpData.address) &&
-          isOfficerComplete(corpData.signingOfficer, corpData.address.countryCode)
+          isPersonComplete(corpData.signingOfficer, true) &&
+          isPersonComplete(corpData.beneficialOwner, false)
         )
       case "trust":
         return (
@@ -493,7 +496,8 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         setCorpTouched({
           entityName: true,
           address: touchAllAddress(corpTouched.address),
-          signingOfficer: { firstName: true, lastName: true, dateOfBirth: true, taxpayerId: true },
+          signingOfficer: touchAllPerson(corpTouched.signingOfficer),
+          beneficialOwner: touchAllPerson(corpTouched.beneficialOwner),
         })
         break
       case "trust":
@@ -681,10 +685,16 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
                 ...prev,
                 signingOfficer: { ...prev.signingOfficer, [parts[1]]: true },
               }))
+            } else if (parts[0] === "beneficialOwner") {
+              setCorpTouched((prev) => ({
+                ...prev,
+                beneficialOwner: { ...prev.beneficialOwner, [parts[1]]: true },
+              }))
             }
           }}
           countries={countries}
           loadingCountries={loadingCountries}
+          phoneList={phoneList}
         />
       )}
 

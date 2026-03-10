@@ -1,42 +1,24 @@
 "use client"
 
 import { Building } from "lucide-react"
-import { TextField, DateField } from "@/components/form-fields"
-import { AddressSection } from "@/components/form-sections"
-import { User } from "lucide-react"
+import { TextField } from "@/components/form-fields"
+import { AddressSection, PersonSection } from "@/components/form-sections"
 import type {
-  AddressFields,
-  AddressTouched,
+  CorporationFields,
+  CorporationTouched,
+  PersonTouched,
   ApiCountry,
 } from "@/lib/investor-types"
-
-export interface CorporationData {
-  entityName: string
-  address: AddressFields
-  signingOfficer: {
-    firstName: string
-    lastName: string
-    dateOfBirth: string
-  }
-}
-
-export interface CorporationTouched {
-  entityName: boolean
-  address: AddressTouched
-  signingOfficer: {
-    firstName: boolean
-    lastName: boolean
-    dateOfBirth: boolean
-  }
-}
+import type { CountryWithPhone } from "@/lib/countries"
 
 interface CorporationFormProps {
-  data: CorporationData
-  onChange: (data: CorporationData) => void
+  data: CorporationFields
+  onChange: (data: CorporationFields) => void
   touched: CorporationTouched
   onBlur: (path: string) => void
   countries: ApiCountry[]
   loadingCountries?: boolean
+  phoneList: CountryWithPhone[]
 }
 
 export function CorporationForm({
@@ -46,6 +28,7 @@ export function CorporationForm({
   onBlur,
   countries,
   loadingCountries,
+  phoneList,
 }: CorporationFormProps) {
   return (
     <div className="space-y-4">
@@ -71,44 +54,29 @@ export function CorporationForm({
         loadingCountries={loadingCountries}
       />
 
-      {/* Signing Officer */}
-      <h3 className="text-gray-300 text-sm font-medium pt-2">Signing Officer</h3>
-
-      <TextField
-        placeholder="First Name"
-        value={data.signingOfficer.firstName}
-        onChange={(v) =>
-          onChange({ ...data, signingOfficer: { ...data.signingOfficer, firstName: v } })
-        }
-        touched={touched.signingOfficer.firstName}
-        onBlur={() => onBlur("signingOfficer.firstName")}
-        error={!data.signingOfficer.firstName.trim() ? "First name is required" : undefined}
-        icon={User}
-        autoComplete="given-name"
+      {/* Signing Officer — full person fields */}
+      <PersonSection
+        title="Signing Officer"
+        fields={data.signingOfficer}
+        onChange={(signingOfficer) => onChange({ ...data, signingOfficer })}
+        touched={touched.signingOfficer}
+        onBlur={(field) => onBlur(`signingOfficer.${field}`)}
+        countries={countries}
+        loadingCountries={loadingCountries}
+        phoneList={phoneList}
       />
 
-      <TextField
-        placeholder="Last Name"
-        value={data.signingOfficer.lastName}
-        onChange={(v) =>
-          onChange({ ...data, signingOfficer: { ...data.signingOfficer, lastName: v } })
-        }
-        touched={touched.signingOfficer.lastName}
-        onBlur={() => onBlur("signingOfficer.lastName")}
-        error={!data.signingOfficer.lastName.trim() ? "Last name is required" : undefined}
-        icon={User}
-        autoComplete="family-name"
-      />
-
-      <DateField
-        value={data.signingOfficer.dateOfBirth}
-        onChange={(v) =>
-          onChange({ ...data, signingOfficer: { ...data.signingOfficer, dateOfBirth: v } })
-        }
-        touched={touched.signingOfficer.dateOfBirth}
-        onBlur={() => onBlur("signingOfficer.dateOfBirth")}
-        placeholder="Date of Birth (MM/DD/YYYY)"
-        requiredError="Date of birth is required"
+      {/* Beneficial Owner — full person fields, no phone */}
+      <PersonSection
+        title="Beneficial Owner"
+        fields={data.beneficialOwner}
+        onChange={(beneficialOwner) => onChange({ ...data, beneficialOwner })}
+        touched={touched.beneficialOwner}
+        onBlur={(field) => onBlur(`beneficialOwner.${field}`)}
+        showPhone={false}
+        countries={countries}
+        loadingCountries={loadingCountries}
+        phoneList={phoneList}
       />
     </div>
   )
