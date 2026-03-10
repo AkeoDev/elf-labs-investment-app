@@ -121,7 +121,7 @@ export interface CorporationFields {
 export interface TrustFields {
   trustName: string
   address: AddressFields
-  trustee: { firstName: string; lastName: string; dateOfBirth: string }
+  trustee: PersonFields
 }
 
 export interface IRAFields {
@@ -143,7 +143,7 @@ export function emptyTrust(): TrustFields {
   return {
     trustName: "",
     address: emptyAddress(),
-    trustee: { firstName: "", lastName: "", dateOfBirth: "" },
+    trustee: emptyPerson(),
   }
 }
 
@@ -156,17 +156,6 @@ export function emptyIRA(): IRAFields {
 }
 
 // ─── Per-type empty touched factories ───────────────────────────────────────
-
-export interface OfficerTouched {
-  firstName: boolean
-  lastName: boolean
-  dateOfBirth: boolean
-  taxpayerId: boolean
-}
-
-export function emptyOfficerTouched(): OfficerTouched {
-  return { firstName: false, lastName: false, dateOfBirth: false, taxpayerId: false }
-}
 
 export interface CorporationTouched {
   entityName: boolean
@@ -187,14 +176,14 @@ export function emptyCorporationTouched(): CorporationTouched {
 export interface TrustTouched {
   trustName: boolean
   address: AddressTouched
-  trustee: OfficerTouched
+  trustee: PersonTouched
 }
 
 export function emptyTrustTouched(): TrustTouched {
   return {
     trustName: false,
     address: emptyAddressTouched(),
-    trustee: emptyOfficerTouched(),
+    trustee: emptyPersonTouched(),
   }
 }
 

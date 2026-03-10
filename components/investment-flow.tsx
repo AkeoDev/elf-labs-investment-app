@@ -465,6 +465,22 @@ export function InvestmentFlow({ userData, existingInvestor, onDismissExisting, 
                   <p className="text-white text-sm">{fd.trustee.firstName} {fd.trustee.lastName}</p>
                 </div>
               </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-500 text-xs">Address</p>
+                  <p className="text-white text-sm">{formatConfirmAddress(fd.trustee)}</p>
+                </div>
+              </div>
+              {fd.trustee.phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gray-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-gray-500 text-xs">Phone</p>
+                    <p className="text-white text-sm">{fd.trustee.phone}</p>
+                  </div>
+                </div>
+              )}
               {fd.trustee.dateOfBirth && (
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-gray-500 shrink-0" />

@@ -515,11 +515,18 @@ async function createProfileByType(args: ProfileCreationArgs): Promise<number | 
         city: fd.address.city,
         region: fd.address.state,
         postal_code: fd.address.zip || "",
+        // Note: DealMaker trustees API supports address fields but not phone or taxpayer_id
         trustees: [
           {
             first_name: fd.trustee.firstName,
             last_name: fd.trustee.lastName,
             date_of_birth: toISO(fd.trustee.dateOfBirth),
+            country: fd.trustee.countryCode || undefined,
+            street_address: fd.trustee.address || undefined,
+            unit2: fd.trustee.unit || undefined,
+            city: fd.trustee.city || undefined,
+            region: fd.trustee.state || undefined,
+            postal_code: fd.trustee.zip || undefined,
           },
         ],
       })

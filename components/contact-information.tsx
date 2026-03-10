@@ -21,7 +21,6 @@ import {
   emptyTrustTouched,
   emptyIRA,
   emptyIRATouched,
-  emptyOfficerTouched,
   dateToISO,
 } from "@/lib/investor-types"
 import type {
@@ -133,14 +132,6 @@ function isAddressComplete(a: AddressFields): boolean {
     a.city.trim().length > 0 &&
     a.state.trim().length > 0
   )
-}
-
-function isOfficerComplete(o: { firstName: string; lastName: string; dateOfBirth: string; taxpayerId?: string }, countryCode?: string): boolean {
-  const baseOk = o.firstName.trim().length > 0 &&
-    o.lastName.trim().length > 0 &&
-    o.dateOfBirth.length === 10
-  const ssnOk = countryCode !== "US" || (o.taxpayerId?.replace(/\D/g, "").length === 9)
-  return baseOk && ssnOk
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -305,13 +296,18 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
       case "trust": {
         const trustee = p.trustees?.[0]
         const trusteeDob = trustee?.date_of_birth ? isoToDisplay(trustee.date_of_birth) : ""
+        const trusteeAddr = trustee
+          ? buildAddress(trustee.street_address, trustee.unit2, trustee.city, trustee.region, trustee.postal_code, trustee.country)
+          : {}
         setTrustData({
           trustName: p.entityName || "",
           address: { ...emptyAddress(), ...primaryAddr },
           trustee: {
+            ...emptyPerson(),
             firstName: trustee?.first_name || "",
             lastName: trustee?.last_name || "",
             dateOfBirth: trusteeDob,
+            ...trusteeAddr,
           },
         })
         break
@@ -447,7 +443,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         return (
           trustData.trustName.trim().length > 0 &&
           isAddressComplete(trustData.address) &&
-          isOfficerComplete(trustData.trustee)
+          isPersonComplete(trustData.trustee, true)
         )
       case "ira":
         return (
@@ -504,7 +500,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
         setTrustTouched({
           trustName: true,
           address: touchAllAddress(trustTouched.address),
-          trustee: { firstName: true, lastName: true, dateOfBirth: true, taxpayerId: true },
+          trustee: touchAllPerson(trustTouched.trustee),
         })
         break
       case "ira":
@@ -721,6 +717,7 @@ export function ContactInformation({ onContinue, onBack, defaultCountryCode, def
           }}
           countries={countries}
           loadingCountries={loadingCountries}
+          phoneList={phoneList}
         />
       )}
 
