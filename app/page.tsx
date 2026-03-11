@@ -192,7 +192,7 @@ export default function InvestmentPage() {
   }, [currentStep])
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="flex flex-col">
       <div className="md:px-8">
         {step === "initial" ? (
           <InitialForm
