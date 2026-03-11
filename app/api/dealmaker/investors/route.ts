@@ -231,6 +231,7 @@ export async function POST(request: NextRequest) {
       formData,
       existingInvestorId,
       existingProfileId,
+      utmParams,
     } = body
 
     // Validate required fields
@@ -242,13 +243,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Format phone to E.164 (e.g. +16135550119)
-    console.log("[v0] Raw phone value received:", JSON.stringify(phone))
     let formattedPhone = phone ? String(phone).replace(/[^0-9+]/g, "") : ""
     if (formattedPhone && !formattedPhone.startsWith("+")) {
       formattedPhone = `+${formattedPhone}`
     }
     formattedPhone = formattedPhone.replace(/(?!^)\+/g, "")
-    console.log("[v0] Formatted phone:", JSON.stringify(formattedPhone))
 
     // Validate investment amount
     const validation = validateInvestment(investmentAmount)
@@ -278,30 +277,30 @@ export async function POST(request: NextRequest) {
     }
     const profileType = profileTypeMap[investorType] || "individual"
 
-    // ─── Create investor profile (type-specific) ──────────────────────
-    // Reuse existing profile from early-create if available (avoids duplicate + phone errors)
+    // ─── Create investor profile with full form data ─────────────────
+    // Always create a fresh full profile (address, DOB, SSN) using the form data.
+    // If creation fails (e.g. duplicate email), fall back to existingProfileId.
 
     let profileId: number | undefined = existingProfileId || undefined
-    if (!profileId) {
-      try {
-        profileId = await createProfileByType({
-          profileType,
-          investorType,
-          email,
-          firstName,
-          lastName,
-          phone: formattedPhone,
-          countryCode,
-          address,
-          city,
-          state,
-          dateOfBirth,
-          formData,
-        })
-      } catch (profileError) {
-        // Profile creation is non-critical, continue without it
-        console.warn("[DealMaker] Profile creation failed:", profileError)
-      }
+    try {
+      const newProfileId = await createProfileByType({
+        profileType,
+        investorType,
+        email,
+        firstName,
+        lastName,
+        phone: formattedPhone,
+        countryCode,
+        address,
+        city,
+        state,
+        dateOfBirth,
+        formData,
+      })
+      if (newProfileId) profileId = newProfileId
+    } catch (profileError) {
+      console.warn("[DealMaker] Profile creation failed, using existing:", profileError)
+      // profileId stays as existingProfileId (may be undefined)
     }
 
     // ─── Create the investor in DealMaker ─────────────────────────────
@@ -319,9 +318,12 @@ export async function POST(request: NextRequest) {
     if (countryCode) {
       investorPayload.country_code = countryCode
     }
-    if (investorType) {
-      investorPayload.tags = [profileType, investorType]
-    }
+    const utms = (utmParams && typeof utmParams === "object") ? utmParams as Record<string, string> : {}
+    const utmTags: string[] = Object.entries(utms).filter(([, v]) => v).map(([k, v]) => `${k}:${v}`)
+    investorPayload.tags = [
+      ...(investorType ? [profileType, investorType] : []),
+      ...utmTags,
+    ]
     if (profileId) {
       investorPayload.investor_profile_id = profileId
     }
@@ -331,18 +333,14 @@ export async function POST(request: NextRequest) {
 
     let investor
     if (existingInvestorId) {
-      console.log("[DealMaker] Updating existing investor:", existingInvestorId, "with payload:", JSON.stringify(investorPayload, null, 2))
       investor = await updateInvestor(
         existingInvestorId,
         investorPayload as Parameters<typeof updateInvestor>[1]
       )
-      console.log("[DealMaker] Investor updated:", JSON.stringify(investor, null, 2))
     } else {
-      console.log("[DealMaker] Creating investor with payload:", JSON.stringify(investorPayload, null, 2))
       investor = await createInvestor(
         investorPayload as Parameters<typeof createInvestor>[0]
       )
-      console.log("[DealMaker] Investor created:", JSON.stringify(investor, null, 2))
     }
 
     // Get the access link for the investor to continue

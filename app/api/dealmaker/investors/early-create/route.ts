@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       investmentAmount,
       profileId: existingProfileId,
       existingInvestorId,
+      utmParams,
     } = body
 
     // Validate required fields
@@ -63,8 +64,6 @@ export async function POST(request: NextRequest) {
         country: countryCode,
       })
 
-      console.log("[Early Create] Profile created:", profile.id)
-
       return NextResponse.json({
         success: true,
         profileId: profile.id,
@@ -74,6 +73,9 @@ export async function POST(request: NextRequest) {
     // ─── Phase 2: Create investor (investmentAmount provided) ─────────
 
     const calculation = calculateInvestment(investmentAmount)
+
+    const utms = (utmParams && typeof utmParams === "object") ? utmParams as Record<string, string> : {}
+    const utmTags: string[] = Object.entries(utms).filter(([, v]) => v).map(([k, v]) => `${k}:${v}`)
 
     const payload: CreateInvestorPayload = {
       email,
@@ -91,17 +93,16 @@ export async function POST(request: NextRequest) {
     if (existingProfileId) {
       payload.investor_profile_id = existingProfileId
     }
+    if (utmTags.length > 0) {
+      payload.tags = utmTags
+    }
 
     let investor
     if (existingInvestorId) {
-      console.log("[Early Create] Updating existing investor:", existingInvestorId)
       investor = await updateInvestor(existingInvestorId, payload)
     } else {
-      console.log("[Early Create] Creating investor with payload:", JSON.stringify(payload, null, 2))
       investor = await createInvestor(payload)
     }
-
-    console.log("[Early Create] Investor created:", investor.id)
 
     return NextResponse.json({
       success: true,

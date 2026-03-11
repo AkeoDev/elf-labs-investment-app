@@ -74,6 +74,7 @@ interface InvestmentFlowProps {
   goToRef?: MutableRefObject<((section: number) => void) | null>
   currentStep?: number
   onStepClick?: (step: number) => void
+  utmParams?: Record<string, string>
 }
 
 export function InvestmentFlow({
@@ -87,6 +88,7 @@ export function InvestmentFlow({
   goToRef,
   currentStep,
   onStepClick,
+  utmParams,
 }: InvestmentFlowProps) {
   // Start directly at Contact Information (step 1), skip investment amount
   const [activeSection, setActiveSection] = useState(1)
@@ -151,6 +153,7 @@ export function InvestmentFlow({
           formData: contactData?.formData,
           existingInvestorId: investorId,
           existingProfileId: profileId,
+          utmParams,
         }),
       })
 

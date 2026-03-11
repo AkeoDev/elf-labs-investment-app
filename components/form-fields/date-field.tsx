@@ -11,6 +11,18 @@ interface DateFieldProps {
   required?: boolean
   requiredError?: string
   incompleteError?: string
+  minAge?: number
+}
+
+function getAgeError(value: string, minAge?: number): string | null {
+  if (!minAge || value.length < 10) return null
+  const [mm, dd, yyyy] = value.split("/")
+  const dob = new Date(Number(yyyy), Number(mm) - 1, Number(dd))
+  if (isNaN(dob.getTime())) return null
+  const today = new Date()
+  const age = today.getFullYear() - dob.getFullYear() -
+    (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0)
+  return age < minAge ? `You must be at least ${minAge} years old to invest` : null
 }
 
 export function DateField({
@@ -22,9 +34,11 @@ export function DateField({
   required = true,
   requiredError = "Date is required",
   incompleteError = "Enter a complete date (MM/DD/YYYY)",
+  minAge,
 }: DateFieldProps) {
   const hasError = touched && required && !value
   const isIncomplete = touched && value.length > 0 && value.length < 10
+  const ageError = touched ? getAgeError(value, minAge) : null
 
   return (
     <div className="relative">
@@ -78,7 +92,7 @@ export function DateField({
         }}
         maxLength={10}
         className={`w-full bg-[#0E031EBF] border rounded-lg py-4 pl-12 pr-4 text-[#F8F8F8] placeholder-[#F8F8F899] focus:outline-none focus:border-gray-400 transition-colors ${
-          hasError || isIncomplete ? "border-red-500" : "border-[#F6248833]"
+          hasError || isIncomplete || ageError ? "border-red-500" : "border-[#F6248833]"
         }`}
       />
       {hasError && (
@@ -86,6 +100,9 @@ export function DateField({
       )}
       {isIncomplete && (
         <p className="text-red-400 text-xs mt-1 ml-1">{incompleteError}</p>
+      )}
+      {ageError && (
+        <p className="text-red-400 text-xs mt-1 ml-1">{ageError}</p>
       )}
     </div>
   )

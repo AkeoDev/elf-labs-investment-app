@@ -109,18 +109,23 @@ export function PersonSection({
           onBlur={() => onBlur("dateOfBirth")}
           placeholder="Date of Birth (MM/DD/YYYY)"
           requiredError="Date of birth is required"
+          minAge={18}
         />
       )}
 
       {/* SSN (US only) */}
       {showSsn && isUS && (
         <TextField
-          placeholder="Social Security Number (XXX-XX-XXXX)"
+          placeholder="Social Security Number (XXX-XX-XXXX) — Required"
           value={fields.taxpayerId}
           onChange={(v) => updateField("taxpayerId", formatSSN(v))}
           touched={touched.taxpayerId}
           onBlur={() => onBlur("taxpayerId")}
-          error={ssnDigits.length > 0 && ssnDigits.length < 9 ? "SSN must be 9 digits" : undefined}
+          error={
+            ssnDigits.length === 0 ? "Social Security Number is required" :
+            ssnDigits.length < 9 ? "SSN must be 9 digits" :
+            undefined
+          }
           icon={Shield}
           autoComplete="off"
           maxLength={11}

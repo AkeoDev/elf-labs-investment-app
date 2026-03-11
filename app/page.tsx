@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { InitialForm } from "@/components/initial-form"
 import { InvestmentFlow } from "@/components/investment-flow"
 
@@ -81,8 +81,19 @@ export default function InvestmentPage() {
   } | null>(null)
   const [earlyCreateError, setEarlyCreateError] = useState("")
   const [currentStep, setCurrentStep] = useState(1)
+  const [utmParams, setUtmParams] = useState<Record<string, string>>({})
   // Ref to tell InvestmentFlow to navigate to a specific section
   const flowGoToRef = useRef<((section: number) => void) | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const utms: Record<string, string> = {}
+    for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]) {
+      const val = params.get(key)
+      if (val) utms[key] = val
+    }
+    setUtmParams(utms)
+  }, [])
 
   const handleInitialSubmit = async (data: {
     email: string
@@ -101,24 +112,24 @@ export default function InvestmentPage() {
     setEarlyCreateError("")
 
     try {
-      // Step 1: Check for existing investor
-      const params = new URLSearchParams({
-        email: data.email,
-        phone: data.phone,
-        firstName: data.firstName,
-        lastName: data.lastName,
-      })
-      const res = await fetch(`/api/dealmaker/investors?${params}`)
-      if (res.ok) {
-        const result: ExistingInvestorData = await res.json()
-        if (result.found) {
-          setExistingInvestor(result)
-          if (result.investor?.id) setInvestorId(result.investor.id)
-          setStep("flow")
-          setCurrentStep(2)
-          return
-        }
-      }
+      // Step 1: Check for existing investor (disabled — always create new)
+      // const params = new URLSearchParams({
+      //   email: data.email,
+      //   phone: data.phone,
+      //   firstName: data.firstName,
+      //   lastName: data.lastName,
+      // })
+      // const res = await fetch(`/api/dealmaker/investors?${params}`)
+      // if (res.ok) {
+      //   const result: ExistingInvestorData = await res.json()
+      //   if (result.found) {
+      //     setExistingInvestor(result)
+      //     if (result.investor?.id) setInvestorId(result.investor.id)
+      //     setStep("flow")
+      //     setCurrentStep(2)
+      //     return
+      //   }
+      // }
 
       // Step 2: No existing investor found — create profile in DealMaker
       // Phase 1: profile-only (catches phone validation errors early)
@@ -134,6 +145,7 @@ export default function InvestmentPage() {
           // No investmentAmount → Phase 1: profile-only
         }),
       })
+
 
       const earlyData = await earlyRes.json()
 
@@ -158,6 +170,7 @@ export default function InvestmentPage() {
             countryCode: data.countryCode,
             investmentAmount,
             profileId: newProfileId,
+            utmParams,
           }),
         })
         const phase2Data = await phase2Res.json()
@@ -217,6 +230,7 @@ export default function InvestmentPage() {
             goToRef={flowGoToRef}
             currentStep={currentStep}
             onStepClick={handleStepClick}
+            utmParams={utmParams}
           />
         )}
       </div>
