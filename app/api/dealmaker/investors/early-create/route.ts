@@ -76,6 +76,13 @@ export async function POST(request: NextRequest) {
 
     const utms = (utmParams && typeof utmParams === "object") ? utmParams as Record<string, string> : {}
     const utmTags: string[] = Object.entries(utms).filter(([, v]) => v).map(([k, v]) => `${k}:${v}`)
+    const utmHeaders: Record<string, string> = {}
+    for (const [k, v] of Object.entries(utms)) {
+      if (v && k.startsWith("utm_")) {
+        const suffix = k.replace(/^utm_/, "").toUpperCase()
+        utmHeaders[`X-DEALMAKER-UTM-${suffix}`] = v
+      }
+    }
 
     const payload: CreateInvestorPayload = {
       email,
@@ -99,9 +106,9 @@ export async function POST(request: NextRequest) {
 
     let investor
     if (existingInvestorId) {
-      investor = await updateInvestor(existingInvestorId, payload)
+      investor = await updateInvestor(existingInvestorId, payload, undefined, utmHeaders)
     } else {
-      investor = await createInvestor(payload)
+      investor = await createInvestor(payload, undefined, utmHeaders)
     }
 
     return NextResponse.json({

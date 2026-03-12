@@ -711,7 +711,7 @@ export function InvestmentFlow({
                 >
                   {isSubmitting ? "Submitting Investment..." : (
                     <>
-                      Complete Payment
+                      Continue
                       <span className="text-lg">→</span>
                     </>
                   )}

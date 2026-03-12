@@ -342,13 +342,15 @@ export async function getDeal(dealId?: string): Promise<Deal> {
  */
 export async function createInvestor(
   investorData: CreateInvestorPayload,
-  dealId?: string
+  dealId?: string,
+  headers?: Record<string, string>
 ): Promise<DealMakerInvestor> {
   const id = dealId || DEALMAKER_CONFIG.dealId
-  
+
   return apiRequest<DealMakerInvestor>(`/deals/${id}/investors`, {
     method: "POST",
     body: JSON.stringify(investorData),
+    headers,
   })
 }
 
@@ -369,13 +371,15 @@ export async function getInvestor(
 export async function updateInvestor(
   investorId: number,
   data: Partial<CreateInvestorPayload>,
-  dealId?: string
+  dealId?: string,
+  headers?: Record<string, string>
 ): Promise<DealMakerInvestor> {
   const id = dealId || DEALMAKER_CONFIG.dealId
-  
+
   return apiRequest<DealMakerInvestor>(`/deals/${id}/investors/${investorId}`, {
     method: "PATCH",
     body: JSON.stringify(data),
+    headers,
   })
 }
 

@@ -324,6 +324,7 @@ export async function POST(request: NextRequest) {
       ...(investorType ? [profileType, investorType] : []),
       ...utmTags,
     ]
+    const utmHeaders = buildUtmHeaders(utms)
     if (profileId) {
       investorPayload.investor_profile_id = profileId
     }
@@ -335,11 +336,15 @@ export async function POST(request: NextRequest) {
     if (existingInvestorId) {
       investor = await updateInvestor(
         existingInvestorId,
-        investorPayload as Parameters<typeof updateInvestor>[1]
+        investorPayload as Parameters<typeof updateInvestor>[1],
+        undefined,
+        utmHeaders
       )
     } else {
       investor = await createInvestor(
-        investorPayload as Parameters<typeof createInvestor>[0]
+        investorPayload as Parameters<typeof createInvestor>[0],
+        undefined,
+        utmHeaders
       )
     }
 
@@ -388,6 +393,20 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+// ─── Helper: build DealMaker UTM headers from utmParams object ───────────────
+
+function buildUtmHeaders(utmParams: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = {}
+  for (const [k, v] of Object.entries(utmParams)) {
+    if (v && k.startsWith("utm_")) {
+      // utm_source → X-DEALMAKER-UTM-SOURCE
+      const suffix = k.replace(/^utm_/, "").toUpperCase()
+      headers[`X-DEALMAKER-UTM-${suffix}`] = v
+    }
+  }
+  return headers
 }
 
 // ─── Helper: format phone with prefix ───────────────────────────────────────
